@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
-import { Rune } from "../types"
-import RuneEditor from "./RuneEditor"
+import { Rune } from "@/types"
+import RuneEditor from "@/components/RuneEditor"
 
 type RuneData = Omit<Rune, "id" | "sequence">
 
@@ -32,7 +32,12 @@ export default function RuneCard({
   const [formData, setFormData] = useState<RuneData>(emptyRuneData)
 
   useEffect(() => {
-    setFormData(rune || emptyRuneData)
+    if (rune) {
+      const { id, sequence, ...editableData } = rune
+      setFormData(editableData)
+    } else {
+      setFormData(emptyRuneData)
+    }
   }, [rune, isEditing])
 
   const handleFieldChange = (
@@ -65,12 +70,12 @@ export default function RuneCard({
   return (
     <div
       className={`
-        bg-gray-800 p-2 rounded-lg border-2 h-full relative group
-        grid grid-cols-2 gap-2
-        ${isEditing ? "border-cyan-500" : "border-gray-700"}
+        bg-gray-800 p-4 rounded-lg border h-full relative group
+        grid grid-cols-2 gap-4
+        ${isEditing ? "border-cyan-500 border-2" : "border-gray-700"}
       `}
     >
-      {/* --- COLUMN 1: RUNE EDITOR --- */}
+      {/* COLUMN 1: RUNE EDITOR */}
       <div>
         <RuneEditor
           runeState={isEditing ? formData.lines : rune?.lines || []}
@@ -78,7 +83,7 @@ export default function RuneCard({
         />
       </div>
 
-      {/* --- COLUMN 2: TEXT & FORM --- */}
+      {/* COLUMN 2: TEXT & FORM */}
       <div className="flex flex-col gap-3">
         {isEditing ? (
           <input
@@ -115,7 +120,7 @@ export default function RuneCard({
               htmlFor={`isConfident-${rune?.id || "new"}`}
               className="text-gray-300"
             >
-              Confident
+              Confident Translation
             </label>
           </div>
         )}
@@ -134,37 +139,42 @@ export default function RuneCard({
           </p>
         )}
 
+        {/* --- UPDATED EDITING BUTTONS --- */}
         {isEditing && (
-          <div className="grid grid-cols-2 gap-2 justify-end mt-auto">
+          <div className="grid grid-cols-2 gap-2 mt-auto">
             <button
+              onPointerDown={(e) => e.stopPropagation()}
               onClick={onCancel}
               title="Cancel"
-              className="text-xl bg-gray-600 hover:bg-gray-500 rounded"
+              className="py-2 text-xl bg-gray-600 hover:bg-gray-500 rounded"
             >
               ❌
             </button>
             <button
+              onPointerDown={(e) => e.stopPropagation()}
               onClick={handleSave}
               title="Save"
-              className="text-xl bg-cyan-600 hover:bg-cyan-500 rounded"
+              className="py-2 text-xl bg-cyan-600 hover:bg-cyan-500 rounded"
             >
-              ✅
+              ✔️
             </button>
           </div>
         )}
       </div>
 
-      {/* --- HOVER BUTTONS (VIEW MODE ONLY) --- */}
+      {/* --- UPDATED HOVER BUTTONS --- */}
       {!isEditing && (
         <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={handleEdit}
             title="Edit"
-            className="p-2 text-sm bg-blue-600 hover:bg-blue-500 rounded"
+            className="p-2 text-sm bg-cyan-600 hover:bg-cyan-500 rounded"
           >
             ✏️
           </button>
           <button
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={handleDelete}
             title="Delete"
             className="p-2 text-sm bg-red-600 hover:bg-red-500 rounded"

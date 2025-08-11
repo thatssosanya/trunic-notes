@@ -97,7 +97,26 @@ export default async function handler(
       break
 
     case "DELETE":
-      // ... (DELETE logic remains the same)
+      try {
+        const { id } = req.query
+
+        if (!id || typeof id !== "string") {
+          return res.status(400).json({ error: "Rune ID is required" })
+        }
+
+        const result = await db
+          .collection("runes")
+          .deleteOne({ _id: new ObjectId(id) })
+
+        if (result.deletedCount === 0) {
+          return res.status(404).json({ error: "Rune not found" })
+        }
+
+        res.status(200).json({ success: true, message: "Rune deleted" })
+      } catch (e) {
+        console.error(e)
+        res.status(500).json({ error: "Failed to delete rune" })
+      }
       break
 
     default:
