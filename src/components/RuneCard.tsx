@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react"
 import { Rune } from "@/types"
 import RuneEditor from "@/components/RuneEditor"
+import { useConfig } from "@/context/ConfigContext"
+import { Check, Edit, Pencil, Trash2, X } from "lucide-react"
 
 type RuneData = Omit<Rune, "id" | "sequence">
 
@@ -15,11 +17,16 @@ interface RuneCardProps {
 }
 
 const emptyRuneData: RuneData = {
-  lines: new Array(13).fill(false),
+  lines: new Array(12).fill(false),
   translation: "",
   isConfident: true,
   note: "",
 }
+
+const buttonBaseClass =
+  "h-8 w-8 flex items-center justify-center rounded cursor-pointer"
+const cyanButtonClass = `${buttonBaseClass} bg-cyan-600 hover:bg-cyan-500`
+const redButtonClass = `${buttonBaseClass} bg-red-600 hover:bg-red-500`
 
 export default function RuneCard({
   rune,
@@ -29,6 +36,7 @@ export default function RuneCard({
   onEdit,
   onDelete,
 }: RuneCardProps) {
+  const { isVerticalCards } = useConfig()
   const [formData, setFormData] = useState<RuneData>(emptyRuneData)
 
   useEffect(() => {
@@ -45,10 +53,19 @@ export default function RuneCard({
   ) => {
     const { name, value, type } = e.target
     const isCheckbox = type === "checkbox"
-    setFormData((prev) => ({
-      ...prev,
-      [name]: isCheckbox ? (e.target as HTMLInputElement).checked : value,
-    }))
+    if (name === "isNotConfident") {
+      setFormData((prev) => ({
+        ...prev,
+        isConfident: !isCheckbox
+          ? prev.isConfident
+          : !(e.target as HTMLInputElement).checked,
+      }))
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: isCheckbox ? (e.target as HTMLInputElement).checked : value,
+      }))
+    }
   }
 
   const handleRuneChange = (lines: boolean[]) => {
@@ -67,23 +84,142 @@ export default function RuneCard({
     }
   }
 
+  // ===================================================================
+  // COMPACT VIEW RENDER
+  // ===================================================================
+  if (isVerticalCards) {
+    return (
+      <div
+        className={`bg-gray-800 p-3 rounded-lg border-2 h-full relative group flex flex-col items-center gap-2 ${
+          isEditing ? "border-cyan-500" : "border-gray-700"
+        }`}
+      >
+        <div className="w-full mb-1">
+          <RuneEditor
+            isEditing={isEditing}
+            runeState={isEditing ? formData.lines : rune?.lines || []}
+            setRuneState={isEditing ? handleRuneChange : () => {}}
+          />
+        </div>
+
+        <div className="w-full grid grid-cols-[1fr_auto] gap-2">
+          {isEditing ? (
+            <>
+              {/* --- EDITING ROW 1: Translation + Cancel Button --- */}
+              <div className="flex items-center gap-2 w-full h-8">
+                <input
+                  type="text"
+                  name="translation"
+                  placeholder="Translation"
+                  value={formData.translation}
+                  onChange={handleFieldChange}
+                  className="bg-gray-900 text-white p-1 rounded w-full h-full text-center text-lg font-bold"
+                  autoFocus
+                />
+                <label
+                  htmlFor={`isNotConfident-${rune?.id || "new"}`}
+                  className="flex items-center gap-1 cursor-pointer text-amber-400"
+                  title="Mark as uncertain"
+                >
+                  <input
+                    type="checkbox"
+                    id={`isNotConfident-${rune?.id || "new"}`}
+                    name="isNotConfident"
+                    checked={!formData.isConfident}
+                    onChange={handleFieldChange}
+                    className="w-5 h-5 accent-amber-400 cursor-pointer"
+                  />
+                  <span className="text-xl font-bold">?</span>
+                </label>
+              </div>
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={onCancel}
+                title="Cancel"
+                className={redButtonClass}
+              >
+                <X size={20} />
+              </button>
+
+              {/* --- EDITING ROW 2: Note + Save Button --- */}
+              <input
+                name="note"
+                placeholder="Note..."
+                value={formData.note}
+                onChange={handleFieldChange}
+                className="bg-gray-900 text-white p-1 rounded w-full text-sm h-8"
+              />
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={handleSave}
+                title="Save"
+                className={cyanButtonClass}
+              >
+                <Check size={20} />
+              </button>
+            </>
+          ) : (
+            <>
+              {/* --- VIEW ROW 1: Centered Translation --- */}
+              <h2 className="col-span-2 text-lg font-bold text-white text-center h-8 flex items-center justify-center">
+                {rune?.translation || (
+                  <span className="text-gray-500">No translation</span>
+                )}
+                {!rune?.isConfident && (
+                  <span className="text-amber-400 ml-2">?</span>
+                )}
+              </h2>
+
+              {/* --- VIEW ROW 2: Centered Note --- */}
+              {rune?.note && (
+                <div className="col-span-2 text-gray-400 text-sm w-full truncate text-center h-8 flex items-center justify-center">
+                  {rune.note}
+                </div>
+              )}
+
+              {/* --- ABSOLUTELY POSITIONED HOVER BUTTONS --- */}
+              {/* They sit on top of the grid and don't affect text layout */}
+              <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 flex flex-col gap-2 transition-opacity">
+                <button
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={handleDelete}
+                  title="Delete"
+                  className={redButtonClass}
+                >
+                  <Trash2 size={18} />
+                </button>
+                <button
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={handleEdit}
+                  title="Edit"
+                  className={cyanButtonClass}
+                >
+                  <Pencil size={18} />
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // ===================================================================
+  // STANDARD (NON-COMPACT) VIEW RENDER
+  // ===================================================================
   return (
     <div
-      className={`
-        bg-gray-800 p-4 rounded-lg border h-full relative group
-        grid grid-cols-2 gap-4
-        ${isEditing ? "border-cyan-500 border-2" : "border-gray-700"}
-      `}
+      className={`bg-gray-800 p-4 rounded-lg border-2 h-full relative group grid grid-cols-2 gap-4 ${
+        isEditing ? "border-cyan-500" : "border-gray-700"
+      }`}
     >
-      {/* COLUMN 1: RUNE EDITOR */}
       <div>
         <RuneEditor
+          isEditing={isEditing}
           runeState={isEditing ? formData.lines : rune?.lines || []}
           setRuneState={isEditing ? handleRuneChange : () => {}}
         />
       </div>
-
-      {/* COLUMN 2: TEXT & FORM */}
       <div className="flex flex-col gap-3">
         {isEditing ? (
           <input
@@ -96,7 +232,7 @@ export default function RuneCard({
             autoFocus
           />
         ) : (
-          <h2 className="text-2xl font-bold text-white truncate">
+          <h2 className="text-xl font-bold text-white truncate h-[3rem] flex items-center">
             {rune?.translation || (
               <span className="text-gray-500">No Translation</span>
             )}
@@ -105,7 +241,6 @@ export default function RuneCard({
             )}
           </h2>
         )}
-
         {isEditing && (
           <div className="flex items-center gap-2">
             <input
@@ -124,7 +259,6 @@ export default function RuneCard({
             </label>
           </div>
         )}
-
         {isEditing ? (
           <textarea
             name="note"
@@ -134,19 +268,19 @@ export default function RuneCard({
             className="bg-gray-900 text-white p-2 rounded w-full flex-grow text-sm"
           />
         ) : (
-          <p className="text-gray-400 mt-1 flex-grow overflow-auto text-sm whitespace-pre-wrap">
-            {rune?.note || <span className="text-gray-500">No note.</span>}
-          </p>
+          rune?.note && (
+            <p className="text-gray-400 mt-1 flex-grow overflow-auto text-sm whitespace-pre-wrap">
+              {rune.note}
+            </p>
+          )
         )}
-
-        {/* --- UPDATED EDITING BUTTONS --- */}
         {isEditing && (
           <div className="grid grid-cols-2 gap-2 mt-auto">
             <button
               onPointerDown={(e) => e.stopPropagation()}
               onClick={onCancel}
               title="Cancel"
-              className="py-2 text-xl bg-gray-600 hover:bg-gray-500 rounded"
+              className="py-2 text-xl bg-red-600 hover:bg-red-500 rounded"
             >
               ❌
             </button>
@@ -161,15 +295,13 @@ export default function RuneCard({
           </div>
         )}
       </div>
-
-      {/* --- UPDATED HOVER BUTTONS --- */}
       {!isEditing && (
         <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onPointerDown={(e) => e.stopPropagation()}
             onClick={handleEdit}
             title="Edit"
-            className="p-2 text-sm bg-cyan-600 hover:bg-cyan-500 rounded"
+            className="p-2 text-lg bg-cyan-600 hover:bg-cyan-500 rounded"
           >
             ✏️
           </button>
@@ -177,7 +309,7 @@ export default function RuneCard({
             onPointerDown={(e) => e.stopPropagation()}
             onClick={handleDelete}
             title="Delete"
-            className="p-2 text-sm bg-red-600 hover:bg-red-500 rounded"
+            className="p-2 text-lg bg-red-600 hover:bg-red-500 rounded"
           >
             🗑️
           </button>
