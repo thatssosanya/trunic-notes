@@ -2,14 +2,13 @@ import { useConfig } from "@/context/ConfigContext"
 import React from "react"
 
 // --- NEW COORDINATE SYSTEM & DEFINITIONS ---
-// The coordinate system is now centered at (0,0) which is the middle line.
+// The coordinate system is centered at (0,0) which is the middle line.
 // Diamond Width = 100, Diamond Height = 60. (Ratio 100/60 = 5/3)
 // Offset from middle line = 1/3 Height = 20.
 
 // Upper Diamond: y from -80 to -20
 // Lower Diamond: y from 20 to 80
 
-// Standard lines are now indices 0-9. The middle line (old index 10) is gone.
 const RUNE_LINES = [
   // 0-3: Upper diamond sides
   { index: 0, path: "M 0 -80 L -50 -50" }, // Upper Left
@@ -40,7 +39,7 @@ const LEFT_CONNECTOR_SEGMENTS = {
 // Reverse circle, controlled by index 11
 const REVERSE_CIRCLE = {
   index: 11,
-  cx: -40, // Moved to a more open area
+  cx: -40,
   cy: 75,
   r: 8,
 }
@@ -54,7 +53,6 @@ const DEPENDENT_CONNECTOR = {
 
 interface RuneEditorProps {
   isEditing: boolean
-  // The state array now has 12 elements
   runeState: boolean[]
   setRuneState: (newState: boolean[]) => void
 }
@@ -67,7 +65,6 @@ export default function RuneEditor({
   const { showInactiveLines } = useConfig()
 
   const handleToggle = (index: number) => {
-    // This component now expects a 12-element array
     const newState = [...runeState]
     newState[index] = !newState[index]
     setRuneState(newState)
@@ -116,7 +113,6 @@ export default function RuneEditor({
 
   return (
     <div className="w-auto h-auto">
-      {/* Updated viewBox to be centered and have padding */}
       <svg viewBox="-60 -90 120 180" xmlns="http://www.w3.org/2000/svg">
         {/* --- INACTIVE ELEMENTS (BOTTOM LAYER) --- */}
         {(isEditing || showInactiveLines) && (
@@ -160,7 +156,7 @@ export default function RuneEditor({
           className={activeClass}
         />
 
-        {/* --- CLICK HANDLERS (MUST BE ON TOP OF EVERYTHING) --- */}
+        {/* --- CLICK HANDLERS --- */}
         {isEditing && (
           <g className="click-handlers">
             {RUNE_LINES.map(({ index, path }) => (

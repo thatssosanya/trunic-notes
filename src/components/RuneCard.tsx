@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Rune } from "@/types"
 import RuneEditor from "@/components/RuneEditor"
 import { useConfig } from "@/context/ConfigContext"
-import { Check, Edit, Pencil, Trash2, X } from "lucide-react"
+import { Check, Pencil, Trash2, X } from "lucide-react"
 
 type RuneData = Omit<Rune, "id" | "sequence">
 
@@ -41,6 +41,7 @@ export default function RuneCard({
 
   useEffect(() => {
     if (rune) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { id, sequence, ...editableData } = rune
       setFormData(editableData)
     } else {
@@ -72,7 +73,7 @@ export default function RuneCard({
     setFormData((prev) => ({ ...prev, lines }))
   }
 
-  const handleSave = () => onSave(formData)
+  const handleSave = useCallback(() => onSave(formData), [onSave, formData])
   const handleEdit = () => onEdit && rune && onEdit(rune.id)
   const handleDelete = () => {
     if (
@@ -83,6 +84,35 @@ export default function RuneCard({
       onDelete(rune.id)
     }
   }
+
+  useEffect(() => {
+    if (!isEditing) {
+      return
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault()
+        onCancel()
+      }
+
+      // enter to save, enter + mod to add newline in textarea
+      if (event.key === "Enter") {
+        if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
+          return
+        }
+
+        event.preventDefault()
+        handleSave()
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown)
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [isEditing, handleSave, onCancel])
 
   // ===================================================================
   // COMPACT VIEW RENDER
@@ -105,7 +135,6 @@ export default function RuneCard({
         <div className="w-full grid grid-cols-[1fr_auto] gap-2">
           {isEditing ? (
             <>
-              {/* --- EDITING ROW 1: Translation + Cancel Button --- */}
               <div className="flex items-center gap-2 w-full h-8">
                 <input
                   type="text"
@@ -141,7 +170,6 @@ export default function RuneCard({
                 <X size={20} />
               </button>
 
-              {/* --- EDITING ROW 2: Note + Save Button --- */}
               <input
                 name="note"
                 placeholder="Note..."
@@ -160,7 +188,6 @@ export default function RuneCard({
             </>
           ) : (
             <>
-              {/* --- VIEW ROW 1: Centered Translation --- */}
               <h2 className="col-span-2 text-lg font-bold text-white text-center h-8 flex items-center justify-center">
                 {rune?.translation || (
                   <span className="text-gray-500">No translation</span>
@@ -170,15 +197,12 @@ export default function RuneCard({
                 )}
               </h2>
 
-              {/* --- VIEW ROW 2: Centered Note --- */}
               {rune?.note && (
                 <div className="col-span-2 text-gray-400 text-sm w-full truncate text-center h-8 flex items-center justify-center">
                   {rune.note}
                 </div>
               )}
 
-              {/* --- ABSOLUTELY POSITIONED HOVER BUTTONS --- */}
-              {/* They sit on top of the grid and don't affect text layout */}
               <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 flex flex-col gap-2 transition-opacity">
                 <button
                   onPointerDown={(e) => e.stopPropagation()}
@@ -205,7 +229,7 @@ export default function RuneCard({
   }
 
   // ===================================================================
-  // STANDARD (NON-COMPACT) VIEW RENDER
+  // STANDARD VIEW RENDER
   // ===================================================================
   return (
     <div
@@ -280,17 +304,17 @@ export default function RuneCard({
               onPointerDown={(e) => e.stopPropagation()}
               onClick={onCancel}
               title="Cancel"
-              className="py-2 text-xl bg-red-600 hover:bg-red-500 rounded"
+              className={redButtonClass}
             >
-              ❌
+              <X size={20} />
             </button>
             <button
               onPointerDown={(e) => e.stopPropagation()}
               onClick={handleSave}
               title="Save"
-              className="py-2 text-xl bg-cyan-600 hover:bg-cyan-500 rounded"
+              className={cyanButtonClass}
             >
-              ✔️
+              <Check size={20} />
             </button>
           </div>
         )}
@@ -301,17 +325,17 @@ export default function RuneCard({
             onPointerDown={(e) => e.stopPropagation()}
             onClick={handleEdit}
             title="Edit"
-            className="p-2 text-lg bg-cyan-600 hover:bg-cyan-500 rounded"
+            className={cyanButtonClass}
           >
-            ✏️
+            <Pencil size={20} />
           </button>
           <button
             onPointerDown={(e) => e.stopPropagation()}
             onClick={handleDelete}
             title="Delete"
-            className="p-2 text-lg bg-red-600 hover:bg-red-500 rounded"
+            className={redButtonClass}
           >
-            🗑️
+            <Trash2 size={20} />
           </button>
         </div>
       )}

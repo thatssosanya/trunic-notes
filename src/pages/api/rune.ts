@@ -14,7 +14,6 @@ export default async function handler(
   switch (req.method) {
     case "GET":
       try {
-        // Find all runes and sort them by the sequence number
         const runes = await runesCollection
           .find({})
           .sort({ sequence: 1 })
@@ -31,41 +30,7 @@ export default async function handler(
       }
       break
 
-    case "POST":
-      try {
-        const { id, ...data }: Omit<Rune, "id"> & { id?: string } = req.body
-        let result
-
-        if (id) {
-          // UPDATE existing rune (don't touch sequence here)
-          result = await runesCollection.updateOne(
-            { _id: new ObjectId(id) },
-            { $set: data }
-          )
-        } else {
-          // INSERT new rune
-          // Find the highest sequence number and add 1
-          const lastRune = await runesCollection
-            .find()
-            .sort({ sequence: -1 })
-            .limit(1)
-            .toArray()
-          const newSequence =
-            lastRune.length > 0 ? (lastRune[0].sequence || 0) + 1 : 0
-
-          result = await runesCollection.insertOne({
-            ...data,
-            sequence: newSequence,
-          })
-        }
-        res.status(200).json({ success: true, result })
-      } catch (e) {
-        console.error(e)
-        res.status(500).json({ error: "Failed to save rune" })
-      }
-      break
-
-    case "PUT": // New method to handle re-ordering
+    case "PUT": // handles reordering
       try {
         const { orderedIds }: { orderedIds: string[] } = req.body
         if (!orderedIds || !Array.isArray(orderedIds)) {
@@ -74,7 +39,6 @@ export default async function handler(
             .json({ error: "orderedIds array is required." })
         }
 
-        // Use bulkWrite for an efficient multi-document update
         const operations = orderedIds.map((id, index) => ({
           updateOne: {
             filter: { _id: new ObjectId(id) },
@@ -93,6 +57,37 @@ export default async function handler(
       } catch (e) {
         console.error(e)
         res.status(500).json({ error: "Failed to reorder runes." })
+      }
+      break
+
+    case "POST": // handles content updates
+      try {
+        const { id, ...data }: Omit<Rune, "id"> & { id?: string } = req.body
+        let result
+
+        if (id) {
+          result = await runesCollection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: data }
+          )
+        } else {
+          const lastRune = await runesCollection
+            .find()
+            .sort({ sequence: -1 })
+            .limit(1)
+            .toArray()
+          const newSequence =
+            lastRune.length > 0 ? (lastRune[0].sequence || 0) + 1 : 0
+
+          result = await runesCollection.insertOne({
+            ...data,
+            sequence: newSequence,
+          })
+        }
+        res.status(200).json({ success: true, result })
+      } catch (e) {
+        console.error(e)
+        res.status(500).json({ error: "Failed to save rune" })
       }
       break
 
