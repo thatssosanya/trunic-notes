@@ -122,7 +122,7 @@ function AuthPage() {
             {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
-              "Sign In"
+              "Log in"
             )}
           </button>
           <button
@@ -134,7 +134,7 @@ function AuthPage() {
             {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
-              "Sign Up"
+              "Sign up"
             )}
           </button>
         </div>

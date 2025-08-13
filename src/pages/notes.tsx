@@ -26,6 +26,7 @@ import {
   VOWEL_LINE_INDICES,
 } from "@/lib/consts"
 import withAuthGating from "@/components/hoc/withAuthGating"
+import { signOut } from "next-auth/react"
 
 function Notes() {
   const {
@@ -243,7 +244,7 @@ function Notes() {
   )
 
   return (
-    <main className="min-h-screen p-8 bg-gray-900 text-white overflow-y-scroll">
+    <main className="min-h-screen flex flex-col p-8 bg-gray-900 text-white">
       <div className="text-center mb-6">
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -295,6 +296,14 @@ function Notes() {
             </SortableContext>
           </DndContext>
         )}
+      </div>
+      <div className="mt-auto w-full flex justify-center">
+        <button
+          className="text-xs text-gray-300 underline cursor-pointer hover:no-underline"
+          onClick={() => signOut()}
+        >
+          Log out
+        </button>
       </div>
     </main>
   )
