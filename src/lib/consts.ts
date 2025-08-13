@@ -16,3 +16,6 @@ export const GRID_COLS_OPTIONS = Object.keys(
 ) as GRID_COLS_OPTION[]
 
 export const LINES_IN_RUNE = 12
+
+export const VOWEL_LINE_INDICES = [0, 1, 6, 7, 10]
+export const CONSONANT_LINE_INDICES = [2, 3, 4, 5, 8, 9]

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react"
-import { Rune } from "@/types"
+import { Rune, RuneData } from "@/types"
 import { useConfig } from "@/context/ConfigContext"
 import { SortableRuneCard } from "@/components/SortableRuneCard"
 import RuneCard from "@/components/RuneCard"
@@ -20,9 +20,13 @@ import {
   rectSortingStrategy,
 } from "@dnd-kit/sortable"
 import { ChevronDown, Loader2 } from "lucide-react"
-import { GRID_COLS_CLASSES } from "@/lib/consts"
+import {
+  CONSONANT_LINE_INDICES,
+  GRID_COLS_CLASSES,
+  VOWEL_LINE_INDICES,
+} from "@/lib/consts"
 
-export default function Home() {
+function Notes() {
   const {
     gridCols,
     searchQuery,
@@ -74,7 +78,7 @@ export default function Home() {
     setAddLocation(null)
   }
 
-  const handleSave = async (data: Omit<Rune, "id" | "sequence">) => {
+  const handleSave = async (data: RuneData) => {
     const body = editingId ? { ...data, id: editingId } : data
     await fetch("/api/rune", {
       method: "POST",
@@ -105,31 +109,87 @@ export default function Home() {
   }
 
   const processedRunes = useMemo(() => {
-    let filtered = [...runes]
+    const lowerCaseQuery = searchQuery.toLowerCase()
     const activeSearchIndices = searchRuneState
       .map((val, idx) => (val ? idx : -1))
       .filter((idx) => idx !== -1)
-    if (activeSearchIndices.length > 0) {
-      filtered = filtered.filter((rune) =>
+    const isTextSearchActive = lowerCaseQuery.length > 0
+    const isRuneSearchActive = activeSearchIndices.length > 0
+
+    const baseFiltered = runes.filter((rune) => {
+      const textMatch =
+        !isTextSearchActive ||
+        rune.translation.toLowerCase().includes(lowerCaseQuery) ||
+        rune.note.toLowerCase().includes(lowerCaseQuery)
+      const visualMatch =
+        !isRuneSearchActive ||
         activeSearchIndices.every((searchIndex) => rune.lines[searchIndex])
-      )
-    }
-    if (searchQuery.length > 0) {
-      const lowerCaseQuery = searchQuery.toLowerCase()
-      filtered = filtered.filter((rune) => {
-        const translation = rune.translation.toLowerCase()
-        if (lowerCaseQuery.length === 1)
-          return translation.includes(lowerCaseQuery)
-        const note = rune.note.toLowerCase()
-        return (
-          translation.includes(lowerCaseQuery) || note.includes(lowerCaseQuery)
+      return textMatch && visualMatch
+    })
+
+    if (!isTextSearchActive && !isRuneSearchActive) {
+      if (sortBy === "alpha") {
+        return baseFiltered.toSorted((a, b) =>
+          a.translation.localeCompare(b.translation)
         )
-      })
+      }
+      return baseFiltered
     }
-    if (sortBy === "alpha") {
-      return filtered.sort((a, b) => a.translation.localeCompare(b.translation))
+
+    // prioritize more precise matches
+    const priorityBuckets = {
+      exactLine: [] as Rune[],
+      exactText: [] as Rune[],
+      prefixText: [] as Rune[],
+      exactLineSingleType: [] as Rune[],
+      remaining: [] as Rune[],
     }
-    return filtered
+
+    const isExactLineMatch = (runeLines: boolean[], indices: number[]) => {
+      if (!isRuneSearchActive) return false
+      return indices.every((i) => runeLines[i] === searchRuneState[i])
+    }
+
+    baseFiltered.forEach((rune) => {
+      const translation = rune.translation.toLowerCase()
+      if (isTextSearchActive && translation === lowerCaseQuery) {
+        priorityBuckets.exactText.push(rune)
+      } else if (isTextSearchActive && translation.startsWith(lowerCaseQuery)) {
+        priorityBuckets.prefixText.push(rune)
+      } else if (isRuneSearchActive) {
+        const isExactVowelMatch = isExactLineMatch(
+          rune.lines,
+          VOWEL_LINE_INDICES
+        )
+        const isExactConsonantMatch = isExactLineMatch(
+          rune.lines,
+          CONSONANT_LINE_INDICES
+        )
+        if (isExactVowelMatch && isExactConsonantMatch) {
+          priorityBuckets.exactLine.push(rune)
+        } else if (isExactVowelMatch || isExactConsonantMatch) {
+          priorityBuckets.exactLineSingleType.push(rune)
+        }
+        priorityBuckets.exactLine.push(rune)
+      } else {
+        priorityBuckets.remaining.push(rune)
+      }
+    })
+
+    const sortedRemaining =
+      sortBy === "alpha"
+        ? priorityBuckets.remaining.toSorted((a, b) =>
+            a.translation.localeCompare(b.translation)
+          )
+        : priorityBuckets.remaining
+
+    return [
+      ...priorityBuckets.exactLine,
+      ...priorityBuckets.exactText,
+      ...priorityBuckets.prefixText,
+      ...priorityBuckets.exactLineSingleType,
+      ...sortedRemaining,
+    ]
   }, [runes, searchQuery, searchRuneState, sortBy])
 
   const isAnyFilterActive =
@@ -140,14 +200,20 @@ export default function Home() {
   const AddNewButton = (
     <button
       onClick={() => handleAddNew("end")}
-      className="flex items-center justify-center w-full h-full border-4 border-dashed border-gray-700 hover:border-cyan-500 rounded-lg transition-colors text-gray-500 hover:text-cyan-400 cursor-pointer"
+      className="flex items-center justify-center w-full h-full min-h-24 border-4 border-dashed border-gray-700 hover:border-cyan-500 rounded-lg transition-colors text-gray-500 hover:text-cyan-400 cursor-pointer"
     >
       <span className="text-6xl font-thin">+</span>
     </button>
   )
 
   const NewRuneForm = (
-    <RuneCard isNew isEditing onSave={handleSave} onCancel={handleCancel} />
+    <RuneCard
+      key="newRuneForm"
+      isNew
+      isEditing
+      onSave={handleSave}
+      onCancel={handleCancel}
+    />
   )
 
   const runeGrid = (
@@ -232,3 +298,5 @@ export default function Home() {
     </main>
   )
 }
+
+export default Notes
