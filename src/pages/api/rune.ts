@@ -2,11 +2,19 @@ import type { NextApiRequest, NextApiResponse } from "next"
 import clientPromise from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 import { Rune } from "@/types"
+import { getServerSession } from "next-auth"
+import { authOptions } from "./auth/[...nextauth]"
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  const session = await getServerSession(req, res, authOptions)
+  if (!session?.user?.id) {
+    return res.status(401).json({ message: "Not authenticated" })
+  }
+  const userId = session.user.id
+
   const client = await clientPromise
   const db = client.db()
   const runesCollection = db.collection<Omit<Rune, "id">>("runes")
@@ -15,14 +23,16 @@ export default async function handler(
     case "GET":
       try {
         const runes = await runesCollection
-          .find({})
+          .find({ userId })
           .sort({ sequence: 1 })
           .toArray()
-        const runesWithStringId = runes.map((rune) => ({
-          ...rune,
-          id: rune._id.toString(),
-          _id: undefined,
-        }))
+        const runesWithStringId = runes.map((rune) => {
+          const { _id, ...rest } = rune
+          return {
+            ...rest,
+            id: _id.toString(),
+          }
+        })
         res.status(200).json(runesWithStringId)
       } catch (e) {
         console.error(e)
@@ -41,7 +51,7 @@ export default async function handler(
 
         const operations = orderedIds.map((id, index) => ({
           updateOne: {
-            filter: { _id: new ObjectId(id) },
+            filter: { _id: new ObjectId(id), userId },
             update: { $set: { sequence: index } },
           },
         }))
@@ -67,12 +77,12 @@ export default async function handler(
 
         if (id) {
           result = await runesCollection.updateOne(
-            { _id: new ObjectId(id) },
+            { _id: new ObjectId(id), userId },
             { $set: data }
           )
         } else {
           const lastRune = await runesCollection
-            .find()
+            .find({ userId })
             .sort({ sequence: -1 })
             .limit(1)
             .toArray()
@@ -81,6 +91,7 @@ export default async function handler(
 
           result = await runesCollection.insertOne({
             ...data,
+            userId,
             sequence: newSequence,
           })
         }
@@ -101,7 +112,7 @@ export default async function handler(
 
         const result = await db
           .collection("runes")
-          .deleteOne({ _id: new ObjectId(id) })
+          .deleteOne({ _id: new ObjectId(id), userId })
 
         if (result.deletedCount === 0) {
           return res.status(404).json({ error: "Rune not found" })

@@ -1,6 +1,6 @@
 import { useState, useEffect, Dispatch, SetStateAction } from "react"
 
-function usePersistedState<T>(
+export default function usePersistedState<T>(
   key: string,
   defaultValue: T
 ): [T, Dispatch<SetStateAction<T>>] {
@@ -27,5 +27,3 @@ function usePersistedState<T>(
 
   return [state, setState]
 }
-
-export default usePersistedState

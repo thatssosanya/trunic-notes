@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useState } from "react"
-import { Rune } from "@/types"
+import { Rune, RuneData } from "@/types"
 import RuneEditor from "@/components/RuneEditor"
 import { useConfig } from "@/context/ConfigContext"
 import { Check, Pencil, Trash2, X } from "lucide-react"
-
-type RuneData = Omit<Rune, "id" | "sequence">
 
 interface RuneCardProps {
   rune?: Rune
