@@ -288,6 +288,10 @@ function Notes() {
 
         {isLoading ? (
           <p className="text-center">Loading notes...</p>
+        ) : isAnyFilterActive && !processedRunes.length ? (
+          <div className="w-full text-center text-lg pt-4">
+            Nothing matched your search
+          </div>
         ) : isDndDisabled ? (
           runeGrid
         ) : (
