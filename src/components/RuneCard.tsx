@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Rune, RuneData } from "@/types"
 import RuneEditor from "@/components/RuneEditor"
 import { useConfig } from "@/context/ConfigContext"
 import { Check, Pencil, Trash2, X } from "lucide-react"
+import { useIsMobile } from "@/hooks/useMediaQuery"
 
 interface RuneCardProps {
   rune?: Rune
@@ -36,6 +37,11 @@ export default function RuneCard({
 }: RuneCardProps) {
   const { isVerticalCards } = useConfig()
   const [formData, setFormData] = useState<RuneData>(emptyRuneData)
+
+  const [isTapped, setIsTapped] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
+  const pointerDownTimeRef = useRef(0)
+  const isDraggingRef = useRef(false)
 
   useEffect(() => {
     if (rune) {
@@ -112,12 +118,58 @@ export default function RuneCard({
     }
   }, [isEditing, handleSave, onCancel])
 
+  const isMobile = useIsMobile()
+
+  const handleTap = () => {
+    if (isMobile && !isEditing) {
+      setIsTapped((v) => !v)
+    }
+  }
+  const handlePointerDown = () => {
+    isDraggingRef.current = false
+    pointerDownTimeRef.current = Date.now()
+  }
+  const handlePointerUp = () => {
+    const elapsed = Date.now() - pointerDownTimeRef.current
+    if (!isDraggingRef.current && elapsed < 100) {
+      handleTap()
+    }
+  }
+  const handlePointerMove = () => {
+    isDraggingRef.current = true
+  }
+  useEffect(() => {
+    if (!isTapped) return
+
+    function handleClickOutside(event: MouseEvent) {
+      if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
+        setIsTapped(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [isTapped])
+
+  const floatingButtonContainerClasses = `
+    transition-opacity
+    opacity-0 md:group-hover:opacity-100
+    ${isMobile && isTapped && "opacity-100"}
+    pointer-events-none md:pointer-events-auto
+  `
+
   // ===================================================================
   // COMPACT VIEW RENDER
   // ===================================================================
   if (isVerticalCards) {
     return (
       <div
+        ref={cardRef}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerMove={handlePointerMove}
         className={`bg-gray-800 p-3 rounded-lg border-2 h-full relative group flex flex-col items-center gap-2 ${
           isEditing ? "border-cyan-500" : "border-gray-700"
         }`}
@@ -201,7 +253,12 @@ export default function RuneCard({
                 </div>
               )}
 
-              <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 flex flex-col gap-2 transition-opacity">
+              <div
+                className={
+                  "absolute bottom-3 right-3 flex flex-col gap-2" +
+                  floatingButtonContainerClasses
+                }
+              >
                 <button
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={handleDelete}
@@ -231,6 +288,10 @@ export default function RuneCard({
   // ===================================================================
   return (
     <div
+      ref={cardRef}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerMove={handlePointerMove}
       className={`bg-gray-800 p-4 rounded-lg border-2 h-full relative group grid grid-cols-2 gap-4 ${
         isEditing ? "border-cyan-500" : "border-gray-700"
       }`}

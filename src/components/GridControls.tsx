@@ -2,7 +2,12 @@ import { useConfig } from "@/context/ConfigContext"
 import RuneEditor from "@/components/RuneEditor"
 import { PlusSquare, Search, X } from "lucide-react"
 import { useEffect, useRef } from "react"
-import { GRID_COLS_OPTIONS, LINES_IN_RUNE } from "@/lib/consts"
+import {
+  GRID_COLS_MOBILE_OPTIONS,
+  GRID_COLS_OPTIONS,
+  LINES_IN_RUNE,
+} from "@/lib/consts"
+import { useIsMobile } from "@/hooks/useMediaQuery"
 
 const buttonBaseClass = "px-3 py-1 text-sm rounded cursor-pointer"
 const buttonActiveClass = "bg-cyan-600 text-white"
@@ -36,6 +41,8 @@ export default function GridControls({
   const isTextSearchActive = searchQuery.length > 0
 
   const searchInputRef = useRef<HTMLInputElement>(null)
+
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     const handleGlobalKeyDown = (event: KeyboardEvent) => {
@@ -113,17 +120,19 @@ export default function GridControls({
         <div className="flex items-center gap-2">
           <span className="text-gray-400 text-sm">Columns:</span>
           <div className="flex flex-wrap gap-1">
-            {GRID_COLS_OPTIONS.map((num) => (
-              <button
-                key={num}
-                onClick={() => setGridCols(num)}
-                className={`w-5 h-5 text-xs rounded cursor-pointer ${
-                  gridCols === num ? buttonActiveClass : buttonInactiveClass
-                }`}
-              >
-                {num}
-              </button>
-            ))}
+            {(isMobile ? GRID_COLS_MOBILE_OPTIONS : GRID_COLS_OPTIONS).map(
+              (num) => (
+                <button
+                  key={num}
+                  onClick={() => setGridCols(num)}
+                  className={`w-5 h-5 text-xs rounded cursor-pointer ${
+                    gridCols === num ? buttonActiveClass : buttonInactiveClass
+                  }`}
+                >
+                  {num}
+                </button>
+              )
+            )}
           </div>
         </div>
 

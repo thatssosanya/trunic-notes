@@ -7,16 +7,15 @@ import GridControls from "@/components/GridControls"
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
-  PointerSensor,
   useSensor,
   useSensors,
   DragEndEvent,
+  MouseSensor,
+  TouchSensor,
 } from "@dnd-kit/core"
 import {
   arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
   rectSortingStrategy,
 } from "@dnd-kit/sortable"
 import { ChevronDown, Loader2 } from "lucide-react"
@@ -45,8 +44,17 @@ function Notes() {
   const [addLocation, setAddLocation] = useState<"start" | "end" | null>(null)
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 10,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 300,
+        tolerance: 5,
+      },
+    })
   )
 
   const fetchRunes = useCallback(async (isInitialLoad = false) => {
@@ -297,7 +305,7 @@ function Notes() {
           </DndContext>
         )}
       </div>
-      <div className="mt-auto w-full flex justify-center">
+      <div className="mt-auto w-full flex justify-center pt-4">
         <button
           className="text-xs text-gray-300 underline cursor-pointer hover:no-underline"
           onClick={() => signOut()}

@@ -6,7 +6,14 @@ import React, {
   SetStateAction,
 } from "react"
 import usePersistedState from "@/hooks/usePersistedState"
-import { GRID_COLS_OPTION, LINES_IN_RUNE } from "@/lib/consts"
+import {
+  GRID_COLS_DESKTOP_DEFAULT,
+  GRID_COLS_MOBILE_DEFAULT,
+  GRID_COLS_OPTION,
+  LINES_IN_RUNE,
+} from "@/lib/consts"
+import { useIsMobile } from "@/hooks/useMediaQuery"
+import useCallbackOnce from "@/hooks/useCallbackOnce"
 
 interface ConfigContextType {
   isMenuOpen: boolean
@@ -42,7 +49,7 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
   )
   const [gridCols, setGridCols] = usePersistedState<GRID_COLS_OPTION>(
     "trunic-grid-cols",
-    "8"
+    GRID_COLS_DESKTOP_DEFAULT
   )
   const [searchQuery, setSearchQuery] = usePersistedState(
     "trunic-search-query",
@@ -56,6 +63,16 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     "trunic-sort-by",
     "sequence"
   )
+
+  const isMobile = useIsMobile()
+  useCallbackOnce(() => {
+    if (isMobile === undefined) {
+      return
+    }
+    if (isMobile && gridCols === GRID_COLS_DESKTOP_DEFAULT) {
+      setGridCols(GRID_COLS_MOBILE_DEFAULT)
+    }
+  })
 
   const value = {
     isMenuOpen,
