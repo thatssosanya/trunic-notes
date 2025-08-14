@@ -23,6 +23,7 @@ import {
   CONSONANT_LINE_INDICES,
   GRID_COLS_CLASSES,
   VOWEL_LINE_INDICES,
+  EMPTY_RUNE_LINES,
 } from "@/lib/consts"
 import withAuthGating from "@/components/hoc/withAuthGating"
 import { signOut } from "next-auth/react"
@@ -228,6 +229,7 @@ function Notes() {
 
     // prioritize more precise matches
     const priorityBuckets = {
+      exact: [] as Rune[],
       exactLine: [] as Rune[],
       exactText: [] as Rune[],
       prefixText: [] as Rune[],
@@ -235,32 +237,29 @@ function Notes() {
       remaining: [] as Rune[],
     }
 
-    const isExactLineMatch = (runeLines: boolean[], indices: number[]) => {
+    const isExactLineMatch = (a: boolean[], b: boolean[], indices: number[]) => {
       if (!isRuneSearchActive) return false
-      return indices.every((i) => runeLines[i] === searchRuneState[i])
+      return indices.every((i) => a[i] === b[i])
     }
 
     baseFiltered.forEach((rune) => {
       const translation = rune.translation.toLowerCase()
-      if (isTextSearchActive && translation === lowerCaseQuery) {
-        priorityBuckets.exactText.push(rune)
-      } else if (isTextSearchActive && translation.startsWith(lowerCaseQuery)) {
-        priorityBuckets.prefixText.push(rune)
-      } else if (isRuneSearchActive) {
-        const isExactVowelMatch = isExactLineMatch(
-          rune.lines,
-          VOWEL_LINE_INDICES
-        )
-        const isExactConsonantMatch = isExactLineMatch(
-          rune.lines,
-          CONSONANT_LINE_INDICES
-        )
-        if (isExactVowelMatch && isExactConsonantMatch) {
-          priorityBuckets.exactLine.push(rune)
-        } else if (isExactVowelMatch || isExactConsonantMatch) {
-          priorityBuckets.exactLineSingleType.push(rune)
-        }
+
+      const isExactText = isTextSearchActive && translation === lowerCaseQuery
+      const isPrefixText = isTextSearchActive && translation.startsWith(lowerCaseQuery)
+      const isExactVowel = isRuneSearchActive && !isExactLineMatch(rune.lines, EMPTY_RUNE_LINES, VOWEL_LINE_INDICES) && isExactLineMatch(rune.lines, searchRuneState, VOWEL_LINE_INDICES)
+      const isExactConsonant = isRuneSearchActive && !isExactLineMatch(rune.lines, EMPTY_RUNE_LINES, CONSONANT_LINE_INDICES) && isExactLineMatch(rune.lines, searchRuneState, CONSONANT_LINE_INDICES)
+
+      if (isExactText && isExactVowel && isExactConsonant) {
+        priorityBuckets.exact.push(rune);
+      } else if (isExactVowel && isExactConsonant) {
         priorityBuckets.exactLine.push(rune)
+      } else if (isExactText) {
+        priorityBuckets.exactText.push(rune)
+      } else if (isPrefixText) {
+        priorityBuckets.prefixText.push(rune)
+      } else if (isExactVowel || isExactConsonant) {
+        priorityBuckets.exactLineSingleType.push(rune)
       } else {
         priorityBuckets.remaining.push(rune)
       }
@@ -274,6 +273,7 @@ function Notes() {
         : priorityBuckets.remaining
 
     return [
+      ...priorityBuckets.exact,
       ...priorityBuckets.exactLine,
       ...priorityBuckets.exactText,
       ...priorityBuckets.prefixText,
