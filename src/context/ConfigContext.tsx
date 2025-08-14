@@ -7,13 +7,14 @@ import React, {
 } from "react"
 import usePersistedState from "@/hooks/usePersistedState"
 import {
+  EMPTY_RUNE_LINES,
   GRID_COLS_DESKTOP_DEFAULT,
   GRID_COLS_MOBILE_DEFAULT,
   GRID_COLS_OPTION,
-  LINES_IN_RUNE,
 } from "@/lib/consts"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 import useCallbackOnce from "@/hooks/useCallbackOnce"
+import { RuneLines } from "@/types"
 
 interface ConfigContextType {
   isMenuOpen: boolean
@@ -26,8 +27,8 @@ interface ConfigContextType {
   setGridCols: Dispatch<SetStateAction<GRID_COLS_OPTION>>
   searchQuery: string
   setSearchQuery: Dispatch<SetStateAction<string>>
-  searchRuneState: boolean[]
-  setSearchRuneState: Dispatch<SetStateAction<boolean[]>>
+  searchRuneState: RuneLines
+  setSearchRuneState: Dispatch<SetStateAction<RuneLines>>
   sortBy: "sequence" | "alpha"
   setSortBy: Dispatch<SetStateAction<"sequence" | "alpha">>
 }
@@ -57,7 +58,7 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
   )
   const [searchRuneState, setSearchRuneState] = usePersistedState(
     "trunic-search-rune",
-    new Array(LINES_IN_RUNE).fill(false)
+    EMPTY_RUNE_LINES
   )
   const [sortBy, setSortBy] = usePersistedState<"sequence" | "alpha">(
     "trunic-sort-by",

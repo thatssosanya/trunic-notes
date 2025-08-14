@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useCallback } from "react"
-import { Rune, RuneData } from "@/types"
+import { useState, useMemo, useEffect, useCallback, useRef } from "react"
+import { Chain, ChainData, Rune, RuneData, RuneLines } from "@/types"
 import { useConfig } from "@/context/ConfigContext"
 import { SortableRuneCard } from "@/components/SortableRuneCard"
 import RuneCard from "@/components/RuneCard"
@@ -18,7 +18,7 @@ import {
   SortableContext,
   rectSortingStrategy,
 } from "@dnd-kit/sortable"
-import { ChevronDown, Loader2 } from "lucide-react"
+import { ChevronDown, ChevronUp, Loader2 } from "lucide-react"
 import {
   CONSONANT_LINE_INDICES,
   GRID_COLS_CLASSES,
@@ -26,6 +26,8 @@ import {
 } from "@/lib/consts"
 import withAuthGating from "@/components/hoc/withAuthGating"
 import { signOut } from "next-auth/react"
+import ChainCard from "@/components/ChainCard"
+import usePersistedState from "@/hooks/usePersistedState"
 
 function Notes() {
   const {
@@ -38,10 +40,27 @@ function Notes() {
   } = useConfig()
 
   const [runes, setRunes] = useState<Rune[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isRefetching, setIsRefetching] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [addLocation, setAddLocation] = useState<"start" | "end" | null>(null)
+  const [chains, setChains] = useState<Chain[]>([])
+
+  const [isRunesLoading, setIsRunesLoading] = useState(true)
+  const [isRunesRefetching, setIsRunesRefetching] = useState(false)
+  const [isChainsLoading, setIsChainsLoading] = useState(true)
+  const [isChainsRefetching, setIsChainsRefetching] = useState(false)
+  const [showChainsSection, setShowChainsSection] = usePersistedState(
+    "trunic-show-chains-section",
+    false
+  )
+
+  const [runeEditingId, setRuneEditingId] = useState<string | null>(null)
+  const [newRuneTemplate, setNewRuneTemplate] = useState<Rune | null>(null)
+  const [newRuneFormLocation, setNewRuneFormLocation] = useState<
+    "start" | "end" | null
+  >(null)
+  const [showNewChainForm, setShowNewChainForm] = useState(false)
+  const [chainEditingId, setChainEditingId] = useState<string | null>(null)
+  const [chainRuneToAdd, setChainRuneToAdd] = useState<RuneLines | null>(null)
+
+  const runeTitleRef = useRef<HTMLDivElement | null>(null)
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -58,8 +77,8 @@ function Notes() {
   )
 
   const fetchRunes = useCallback(async (isInitialLoad = false) => {
-    if (isInitialLoad) setIsLoading(true)
-    else setIsRefetching(true)
+    if (isInitialLoad) setIsRunesLoading(true)
+    else setIsRunesRefetching(true)
 
     try {
       const response = await fetch("/api/rune")
@@ -69,39 +88,100 @@ function Notes() {
     } catch (error) {
       console.error("Failed to fetch runes:", error)
     } finally {
-      if (isInitialLoad) setIsLoading(false)
-      setIsRefetching(false)
+      if (isInitialLoad) setIsRunesLoading(false)
+      setIsRunesRefetching(false)
+    }
+  }, [])
+
+  const fetchChains = useCallback(async (isInitialLoad = false) => {
+    if (isInitialLoad) setIsChainsLoading(true)
+    else setIsChainsRefetching(true)
+
+    try {
+      const response = await fetch("/api/chain")
+      if (!response.ok) throw new Error("Failed to fetch")
+      const data = await response.json()
+      setChains(data)
+    } catch (error) {
+      console.error("Failed to fetch runes:", error)
+    } finally {
+      if (isInitialLoad) setIsChainsLoading(false)
+      setIsChainsRefetching(false)
     }
   }, [])
 
   useEffect(() => {
     fetchRunes(true)
-  }, [fetchRunes])
+    fetchChains(true)
+  }, [fetchRunes, fetchChains])
 
-  const handleAddNew = (location: "start" | "end") => {
-    setEditingId(null)
-    setAddLocation(location)
+  const handleAddNewRune = (
+    location: "start" | "end",
+    template?: RuneLines
+  ) => {
+    setRuneEditingId(null)
+    setNewRuneFormLocation(location)
+    setNewRuneTemplate(
+      template
+        ? {
+            id: "",
+            userId: "",
+            sequence: 0,
+            lines: template,
+            translation: "",
+            note: "",
+            isConfident: true,
+          }
+        : null
+    )
+  }
+  const handleCopyChainRuneToNew = (rune: RuneLines) => {
+    handleAddNewRune("start", rune)
+    runeTitleRef.current?.scrollIntoView()
+  }
+  const handleCopyRuneToChain = (rune: RuneLines) => {
+    setChainRuneToAdd(rune)
+  }
+  const handleCancelForms = () => {
+    setRuneEditingId(null)
+    setNewRuneFormLocation(null)
+    setChainEditingId(null)
+    setNewRuneTemplate(null)
+    setChainEditingId(null)
+    setChainRuneToAdd(null)
+    setShowNewChainForm(false)
   }
 
-  const handleCancel = () => {
-    setEditingId(null)
-    setAddLocation(null)
-  }
-
-  const handleSave = async (data: RuneData) => {
-    const body = editingId ? { ...data, id: editingId } : data
+  const handleSaveRune = async (data: RuneData) => {
+    const body = runeEditingId ? { ...data, id: runeEditingId } : data
     await fetch("/api/rune", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     })
-    handleCancel()
+    handleCancelForms()
     await fetchRunes()
   }
-  const handleDelete = async (id: string) => {
+  const handleDeleteRune = async (id: string) => {
     await fetch(`/api/rune?id=${id}`, { method: "DELETE" })
     await fetchRunes()
   }
+  const handleSaveChain = async (data: ChainData) => {
+    const body = chainEditingId ? { ...data, id: chainEditingId } : data
+    const method = chainEditingId ? "PUT" : "POST"
+    await fetch("/api/chain", {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    handleCancelForms()
+    await fetchChains()
+  }
+  const handleDeleteChain = async (id: string) => {
+    await fetch(`/api/chain?id=${id}`, { method: "DELETE" })
+    await fetchChains()
+  }
+
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (over && active.id !== over.id) {
@@ -205,11 +285,15 @@ function Notes() {
   const isAnyFilterActive =
     searchQuery.length > 0 || searchRuneState.some((v) => v)
   const isDndDisabled =
-    sortBy === "alpha" || isAnyFilterActive || addLocation !== null
+    sortBy === "alpha" ||
+    isAnyFilterActive ||
+    newRuneFormLocation !== null ||
+    showNewChainForm ||
+    !!chainEditingId
 
   const AddNewButton = (
     <button
-      onClick={() => handleAddNew("end")}
+      onClick={() => handleAddNewRune("end")}
       className="flex items-center justify-center w-full h-full min-h-24 border-4 border-dashed border-gray-700 hover:border-cyan-500 rounded-lg transition-colors text-gray-500 hover:text-cyan-400 cursor-pointer"
     >
       <span className="text-6xl font-thin">+</span>
@@ -219,10 +303,10 @@ function Notes() {
   const NewRuneForm = (
     <RuneCard
       key="newRuneForm"
-      isNew
+      rune={newRuneTemplate ?? undefined}
       isEditing
-      onSave={handleSave}
-      onCancel={handleCancel}
+      onSave={handleSaveRune}
+      onCancel={handleCancelForms}
     />
   )
 
@@ -230,22 +314,27 @@ function Notes() {
     <div
       className={`grid ${GRID_COLS_CLASSES[gridCols] || "grid-cols-8"} gap-4`}
     >
-      {addLocation === "start" && NewRuneForm}
+      {newRuneFormLocation === "start" && NewRuneForm}
       {processedRunes.map((rune) => (
         <SortableRuneCard
           key={rune.id}
           rune={rune}
-          isEditing={editingId === rune.id}
-          onSave={handleSave}
-          onCancel={handleCancel}
-          onEdit={setEditingId}
-          onDelete={handleDelete}
+          isEditing={runeEditingId === rune.id}
+          onSave={handleSaveRune}
+          onCancel={handleCancelForms}
+          onEdit={setRuneEditingId}
+          onDelete={handleDeleteRune}
+          onAddToChain={
+            showNewChainForm || !!chainEditingId
+              ? handleCopyRuneToChain
+              : undefined
+          }
           isDndDisabled={isDndDisabled}
         />
       ))}
-      {addLocation === "end"
+      {newRuneFormLocation === "end"
         ? NewRuneForm
-        : !isAnyFilterActive && !addLocation
+        : !isAnyFilterActive && !newRuneFormLocation
         ? AddNewButton
         : null}
     </div>
@@ -272,13 +361,18 @@ function Notes() {
 
       {isMenuOpen && (
         <GridControls
-          isModifying={!!editingId || !!addLocation}
-          onAddNew={() => handleAddNew("start")}
+          isModifying={
+            !!runeEditingId ||
+            !!newRuneFormLocation ||
+            !!chainEditingId ||
+            showNewChainForm
+          }
+          onAddNew={() => handleAddNewRune("start")}
         />
       )}
 
       <div className="relative">
-        {isRefetching && (
+        {(isRunesRefetching || isChainsRefetching) && (
           <div className="absolute inset-0 bg-gray-900/75 z-10 flex justify-center overflow-hidden rounded-lg transform">
             <div className="fixed top-1/2">
               <Loader2 className="h-12 w-12 text-cyan-300 animate-spin -translate-y-1/2" />
@@ -286,8 +380,69 @@ function Notes() {
           </div>
         )}
 
-        {isLoading ? (
-          <p className="text-center">Loading notes...</p>
+        <button
+          onClick={() => setShowChainsSection(!showChainsSection)}
+          className="w-full flex justify-center items-center gap-2 mb-4 cursor-pointer"
+        >
+          <h2 className="text-2xl font-bold text-gray-300">Chains</h2>
+          {showChainsSection ? <ChevronUp /> : <ChevronDown />}
+        </button>
+        {
+          <>
+            <div className="mb-4">
+              {showChainsSection &&
+                (isChainsLoading ? (
+                  <p className="text-center mb-4">Loading chains...</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {chains.map((chain) => (
+                      <ChainCard
+                        key={chain.id}
+                        chain={chain}
+                        isEditing={chainEditingId === chain.id}
+                        onSave={handleSaveChain}
+                        onCancel={handleCancelForms}
+                        onEdit={setChainEditingId}
+                        onDelete={handleDeleteChain}
+                        onCopyRuneToNew={handleCopyChainRuneToNew}
+                        runeToAdd={chainRuneToAdd}
+                        onRuneAdded={() => setChainRuneToAdd(null)}
+                      />
+                    ))}
+                    {showNewChainForm ? (
+                      <ChainCard
+                        key="newChainForm"
+                        isEditing
+                        onSave={handleSaveChain}
+                        onCancel={handleCancelForms}
+                        onCopyRuneToNew={handleCopyChainRuneToNew}
+                        runeToAdd={chainRuneToAdd}
+                        onRuneAdded={() => setChainRuneToAdd(null)}
+                      />
+                    ) : (
+                      !chainEditingId && (
+                        <button
+                          onClick={() => setShowNewChainForm(true)}
+                          className="flex items-center justify-center w-full h-full min-h-24 border-4 border-dashed border-gray-700 hover:border-cyan-500 rounded-lg transition-colors text-gray-500 hover:text-cyan-400 cursor-pointer"
+                        >
+                          <span className="text-6xl font-thin">+</span>
+                        </button>
+                      )
+                    )}
+                  </div>
+                ))}
+            </div>
+          </>
+        }
+
+        <h2
+          ref={runeTitleRef}
+          className="text-2xl text-center font-bold text-gray-300 mb-4"
+        >
+          Runes
+        </h2>
+        {isRunesLoading ? (
+          <p className="text-center mb-4">Loading runes...</p>
         ) : isAnyFilterActive && !processedRunes.length ? (
           <div className="w-full text-center text-lg pt-4">
             Nothing matched your search

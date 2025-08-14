@@ -1,3 +1,5 @@
+import { RuneLines } from "@/types"
+
 export const GRID_COLS_MOBILE_CLASSES = {
   "1": "grid-cols-1",
   "2": "grid-cols-2",
@@ -24,6 +26,7 @@ export const GRID_COLS_DESKTOP_DEFAULT = "8"
 export const GRID_COLS_MOBILE_DEFAULT = "2"
 
 export const LINES_IN_RUNE = 12
+export const EMPTY_RUNE_LINES = Array(LINES_IN_RUNE).fill(false) as RuneLines
 
 export const VOWEL_LINE_INDICES = [0, 1, 6, 7, 10]
 export const CONSONANT_LINE_INDICES = [2, 3, 4, 5, 8, 9]

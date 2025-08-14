@@ -1,7 +1,7 @@
 import React from "react"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import RuneCard from "./RuneCard"
+import RuneCard from "@/components/RuneCard"
 
 interface SortableRuneCardProps extends React.ComponentProps<typeof RuneCard> {
   isDndDisabled: boolean

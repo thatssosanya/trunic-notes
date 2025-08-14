@@ -1,7 +1,8 @@
 import { useConfig } from "@/context/ConfigContext"
+import { RuneLines } from "@/types"
 import React from "react"
 
-// --- NEW COORDINATE SYSTEM & DEFINITIONS ---
+// --- COORDINATE SYSTEM & DEFINITIONS ---
 // The coordinate system is centered at (0,0) which is the middle line.
 // Diamond Width = 100, Diamond Height = 60. (Ratio 100/60 = 5/3)
 // Offset from middle line = 1/3 Height = 20.
@@ -51,23 +52,54 @@ const DEPENDENT_CONNECTOR = {
   controllerIndex: 9,
 }
 
+const getDynamicViewBox = (chainPosition?: "first" | "middle" | "last") => {
+  const strokeWidth = 5
+  const halfStroke = strokeWidth / 2
+  const contentWidth = 100
+  const halfContent = contentWidth / 2
+
+  let minX: number
+  let width: number
+
+  switch (chainPosition) {
+    case "first":
+    case "middle":
+    case "last": {
+      minX = -halfStroke - halfContent
+      width = contentWidth
+      break
+    }
+    default: {
+      minX = -strokeWidth * 2 - halfContent
+      width = strokeWidth * 4 + contentWidth
+      break
+    }
+  }
+
+  return `${minX} -90 ${width} 180`
+}
+
 interface RuneEditorProps {
   isEditing: boolean
-  runeState: boolean[]
-  setRuneState: (newState: boolean[]) => void
+  runeState: RuneLines
+  setRuneState: (newState: RuneLines) => void
+  chainPosition?: "first" | "middle" | "last"
 }
 
 export default function RuneEditor({
   isEditing,
   runeState,
   setRuneState,
+  chainPosition,
 }: RuneEditorProps) {
   const { showInactiveLines } = useConfig()
 
   const handleToggle = (index: number) => {
-    const newState = [...runeState]
+    const newState = [...runeState] as RuneLines
     newState[index] = !newState[index]
-    setRuneState(newState)
+    if (isEditing) {
+      setRuneState(newState)
+    }
   }
 
   const activeClass = "stroke-cyan-300"
@@ -113,7 +145,10 @@ export default function RuneEditor({
 
   return (
     <div className="w-auto h-auto">
-      <svg viewBox="-60 -90 120 180" xmlns="http://www.w3.org/2000/svg">
+      <svg
+        viewBox={getDynamicViewBox(chainPosition)}
+        xmlns="http://www.w3.org/2000/svg"
+      >
         {/* --- INACTIVE ELEMENTS (BOTTOM LAYER) --- */}
         {(isEditing || showInactiveLines) && (
           <g className="inactive-elements">

@@ -3,9 +3,9 @@ import RuneEditor from "@/components/RuneEditor"
 import { PlusSquare, Search, X } from "lucide-react"
 import { useEffect, useRef } from "react"
 import {
+  EMPTY_RUNE_LINES,
   GRID_COLS_MOBILE_OPTIONS,
   GRID_COLS_OPTIONS,
-  LINES_IN_RUNE,
 } from "@/lib/consts"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 
@@ -51,7 +51,7 @@ export default function GridControls({
       }
       if (event.key === "Escape") {
         setSearchQuery("")
-        setSearchRuneState(new Array(LINES_IN_RUNE).fill(false))
+        setSearchRuneState(EMPTY_RUNE_LINES)
       } else if (event.key.length === 1) {
         searchInputRef.current?.focus()
       }
@@ -82,9 +82,7 @@ export default function GridControls({
         </div>
         {isRuneSearchActive && (
           <button
-            onClick={() =>
-              setSearchRuneState(new Array(LINES_IN_RUNE).fill(false))
-            }
+            onClick={() => setSearchRuneState(EMPTY_RUNE_LINES)}
             className="absolute top-1 right-1 text-gray-400 hover:text-red-400 cursor-pointer"
           >
             <X size={20} />
@@ -189,7 +187,7 @@ export default function GridControls({
                 sortBy === "alpha" ? buttonActiveClass : buttonInactiveClass
               }`}
             >
-              Alphabetical
+              Alpha
             </button>
             <button
               onClick={() => setSortBy("sequence")}

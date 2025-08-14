@@ -1,22 +1,23 @@
-import { useCallback, useEffect, useRef, useState } from "react"
-import { Rune, RuneData } from "@/types"
+import { useCallback, useEffect, useState } from "react"
+import { Rune, RuneData, RuneLines } from "@/types"
 import RuneEditor from "@/components/RuneEditor"
 import { useConfig } from "@/context/ConfigContext"
-import { Check, Pencil, Trash2, X } from "lucide-react"
-import { useIsMobile } from "@/hooks/useMediaQuery"
+import { Check, Pencil, Plus, Trash2, X } from "lucide-react"
+import { EMPTY_RUNE_LINES } from "@/lib/consts"
+import useTapOrHover from "@/hooks/useTapOrHover"
 
 interface RuneCardProps {
   rune?: Rune
   isEditing?: boolean
-  isNew?: boolean
   onSave: (data: RuneData) => void
   onCancel: () => void
   onEdit?: (id: string) => void
   onDelete?: (id: string) => void
+  onAddToChain?: (lines: RuneLines) => void
 }
 
 const emptyRuneData: RuneData = {
-  lines: new Array(12).fill(false),
+  lines: EMPTY_RUNE_LINES,
   translation: "",
   isConfident: true,
   note: "",
@@ -34,14 +35,10 @@ export default function RuneCard({
   onCancel,
   onEdit,
   onDelete,
+  onAddToChain,
 }: RuneCardProps) {
   const { isVerticalCards } = useConfig()
   const [formData, setFormData] = useState<RuneData>(emptyRuneData)
-
-  const [isTapped, setIsTapped] = useState(false)
-  const cardRef = useRef<HTMLDivElement>(null)
-  const pointerDownTimeRef = useRef(0)
-  const isDraggingRef = useRef(false)
 
   useEffect(() => {
     if (rune) {
@@ -73,7 +70,7 @@ export default function RuneCard({
     }
   }
 
-  const handleRuneChange = (lines: boolean[]) => {
+  const handleRuneChange = (lines: RuneLines) => {
     setFormData((prev) => ({ ...prev, lines }))
   }
 
@@ -118,58 +115,20 @@ export default function RuneCard({
     }
   }, [isEditing, handleSave, onCancel])
 
-  const isMobile = useIsMobile()
-
-  const handleTap = () => {
-    if (isMobile && !isEditing) {
-      setIsTapped((v) => !v)
-    }
-  }
-  const handlePointerDown = () => {
-    isDraggingRef.current = false
-    pointerDownTimeRef.current = Date.now()
-  }
-  const handlePointerUp = () => {
-    const elapsed = Date.now() - pointerDownTimeRef.current
-    if (!isDraggingRef.current && elapsed < 100) {
-      handleTap()
-    }
-  }
-  const handlePointerMove = () => {
-    isDraggingRef.current = true
-  }
-  useEffect(() => {
-    if (!isTapped) return
-
-    function handleClickOutside(event: MouseEvent) {
-      if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
-        setIsTapped(false)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [isTapped])
-
-  const floatingButtonContainerClasses = `
-    transition-opacity
-    opacity-0 md:group-hover:opacity-100
-    ${isMobile && isTapped && "opacity-100"}
-    pointer-events-none md:pointer-events-auto
-  `
+  const {
+    elementRef,
+    handlers,
+    buttonClasses: hiddenButtonClasses,
+  } = useTapOrHover({ isEditing })
 
   // ===================================================================
-  // COMPACT VIEW RENDER
+  // VERTICAL CARD RENDER
   // ===================================================================
   if (isVerticalCards) {
     return (
       <div
-        ref={cardRef}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onPointerMove={handlePointerMove}
+        ref={elementRef}
+        {...handlers}
         className={`bg-gray-800 p-3 rounded-lg border-2 h-full relative group flex flex-col items-center gap-2 ${
           isEditing ? "border-cyan-500" : "border-gray-700"
         }`}
@@ -177,8 +136,10 @@ export default function RuneCard({
         <div className="w-full mb-1">
           <RuneEditor
             isEditing={isEditing}
-            runeState={isEditing ? formData.lines : rune?.lines || []}
-            setRuneState={isEditing ? handleRuneChange : () => {}}
+            runeState={
+              isEditing ? formData.lines : rune?.lines || EMPTY_RUNE_LINES
+            }
+            setRuneState={handleRuneChange}
           />
         </div>
 
@@ -253,29 +214,40 @@ export default function RuneCard({
                 </div>
               )}
 
-              <div
-                className={
-                  "absolute bottom-3 right-3 flex flex-col gap-2" +
-                  floatingButtonContainerClasses
-                }
-              >
+              {onAddToChain ? (
                 <button
+                  onClick={() => rune && onAddToChain(rune.lines)}
                   onPointerDown={(e) => e.stopPropagation()}
-                  onClick={handleDelete}
-                  title="Delete"
-                  className={redButtonClass}
+                  title="Add this rune to the chain being edited"
+                  className="absolute top-1 left-1 p-1 bg-green-600 hover:bg-green-500 text-white rounded opacity-50 hover:opacity-100 transition-opacity"
                 >
-                  <Trash2 size={18} />
+                  <Plus size={20} />
                 </button>
-                <button
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={handleEdit}
-                  title="Edit"
-                  className={cyanButtonClass}
+              ) : (
+                <div
+                  className={
+                    "absolute bottom-3 right-3 flex flex-col gap-2" +
+                    hiddenButtonClasses
+                  }
                 >
-                  <Pencil size={18} />
-                </button>
-              </div>
+                  <button
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={handleDelete}
+                    title="Delete"
+                    className={redButtonClass}
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                  <button
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={handleEdit}
+                    title="Edit"
+                    className={cyanButtonClass}
+                  >
+                    <Pencil size={18} />
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -284,14 +256,12 @@ export default function RuneCard({
   }
 
   // ===================================================================
-  // STANDARD VIEW RENDER
+  // HORIZONTAL CARD RENDER
   // ===================================================================
   return (
     <div
-      ref={cardRef}
-      onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
-      onPointerMove={handlePointerMove}
+      ref={elementRef}
+      {...handlers}
       className={`bg-gray-800 p-4 rounded-lg border-2 h-full relative group grid grid-cols-2 gap-4 ${
         isEditing ? "border-cyan-500" : "border-gray-700"
       }`}
@@ -299,8 +269,10 @@ export default function RuneCard({
       <div>
         <RuneEditor
           isEditing={isEditing}
-          runeState={isEditing ? formData.lines : rune?.lines || []}
-          setRuneState={isEditing ? handleRuneChange : () => {}}
+          runeState={
+            isEditing ? formData.lines : rune?.lines || EMPTY_RUNE_LINES
+          }
+          setRuneState={handleRuneChange}
         />
       </div>
       <div className="flex flex-col gap-3">
