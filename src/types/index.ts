@@ -23,8 +23,11 @@ export type RuneData = {
 
 export type Rune = RuneData & {
   id: string
-  userId: string
   sequence: number
+}
+
+export type DbRune = Rune & {
+  userId: string
 }
 
 export type ChainData = {
@@ -35,8 +38,11 @@ export type ChainData = {
 
 export type Chain = ChainData & {
   id: string
-  userId: string
   sequence: number
+}
+
+export type DbChain = Chain & {
+  userId: string
 }
 
 export type UserData = {

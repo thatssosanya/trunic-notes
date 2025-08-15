@@ -4,6 +4,7 @@ import React, {
   ReactNode,
   Dispatch,
   SetStateAction,
+  useCallback,
 } from "react"
 import usePersistedState from "@/hooks/usePersistedState"
 import {
@@ -13,8 +14,8 @@ import {
   GRID_COLS_OPTION,
 } from "@/lib/consts"
 import { useIsMobile } from "@/hooks/useMediaQuery"
-import useCallbackOnce from "@/hooks/useCallbackOnce"
-import { RuneLines } from "@/types"
+import useCallbackUntilSignal from "@/hooks/useCallbackOnce"
+import { SortingOptions } from "@/lib/enums"
 
 interface ConfigContextType {
   isMenuOpen: boolean
@@ -25,12 +26,8 @@ interface ConfigContextType {
   setIsVerticalCards: Dispatch<SetStateAction<boolean>>
   gridCols: GRID_COLS_OPTION
   setGridCols: Dispatch<SetStateAction<GRID_COLS_OPTION>>
-  searchQuery: string
-  setSearchQuery: Dispatch<SetStateAction<string>>
-  searchRuneState: RuneLines
-  setSearchRuneState: Dispatch<SetStateAction<RuneLines>>
-  sortBy: "sequence" | "alpha"
-  setSortBy: Dispatch<SetStateAction<"sequence" | "alpha">>
+  sortBy: SortingOptions
+  setSortBy: Dispatch<SetStateAction<SortingOptions>>
 }
 
 const ConfigContext = createContext<ConfigContextType | undefined>(undefined)
@@ -60,20 +57,21 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     "trunic-search-rune",
     EMPTY_RUNE_LINES
   )
-  const [sortBy, setSortBy] = usePersistedState<"sequence" | "alpha">(
+  const [sortBy, setSortBy] = usePersistedState<SortingOptions>(
     "trunic-sort-by",
-    "sequence"
+    SortingOptions.SEQUENCE
   )
 
   const isMobile = useIsMobile()
-  useCallbackOnce(() => {
+  const correctGridColsForMobile = useCallback(() => {
     if (isMobile === undefined) {
       return
     }
     if (isMobile && gridCols === GRID_COLS_DESKTOP_DEFAULT) {
       setGridCols(GRID_COLS_MOBILE_DEFAULT)
     }
-  })
+  }, [isMobile, gridCols, setGridCols])
+  useCallbackUntilSignal(correctGridColsForMobile)
 
   const value = {
     isMenuOpen,

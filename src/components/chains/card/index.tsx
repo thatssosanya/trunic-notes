@@ -1,54 +1,62 @@
-import { useEffect, useState } from "react"
-import { Chain, ChainData, RuneLines } from "@/types"
-import RuneEditor from "@/components/RuneEditor"
+import { memo, useEffect, useMemo, useState } from "react"
+import { Chain, RuneLines } from "@/types"
+import RuneEditor from "@/components/runes/RuneEditor"
 import { Check, FilePlus, Pencil, Trash2, X } from "lucide-react"
-import { EMPTY_RUNE_LINES, GRID_COLS_CLASSES } from "@/lib/consts"
+import {
+  EMPTY_CHAIN_DATA,
+  EMPTY_RUNE_LINES,
+  GRID_COLS_CLASSES,
+  GRID_COLS_OPTION,
+} from "@/lib/consts"
 import { useConfig } from "@/context/ConfigContext"
 import useTapOrHover from "@/hooks/useTapOrHover"
+import { useDeleteChain, useSaveChain } from "@/hooks/data/chains"
 
 interface ChainCardProps {
-  chain?: Chain
+  chain?: Partial<Chain>
   isEditing: boolean
-  onSave: (data: ChainData) => void
-  onCancel: () => void
   onEdit?: (id: string) => void
-  onDelete?: (id: string) => void
-  onCopyRuneToNew: (lines: RuneLines) => void
-  runeToAdd?: RuneLines | null
-  onRuneAdded?: () => void
+  onCancel: () => void
+  onCopyRune?: (lines: RuneLines) => void
+  consumeRune?: () => RuneLines | null
 }
 
-const emptyChainData: ChainData = {
-  runes: [EMPTY_RUNE_LINES],
-  translation: "",
-  note: "",
-}
+const SMALL_GRID_COLS = ["1", "2", "3"] as GRID_COLS_OPTION[]
+const FALLBACK_GRID_COLS = "4" as GRID_COLS_OPTION
 
-export default function ChainCard({
+function ChainCard({
   chain,
   isEditing,
-  onSave,
-  onCancel,
   onEdit,
-  onDelete,
-  onCopyRuneToNew,
-  runeToAdd,
-  onRuneAdded,
+  onCancel,
+  onCopyRune,
+  consumeRune,
 }: ChainCardProps) {
-  const [formData, setFormData] = useState(emptyChainData)
-  const { gridCols } = useConfig()
-  const effectiveGridCols = ["1", "2", "3"].includes(gridCols) ? "4" : gridCols
+  const { gridCols, isVerticalCards } = useConfig()
+
+  const [formData, setFormData] = useState(EMPTY_CHAIN_DATA)
+
+  const saveChainMutation = useSaveChain()
+  const deleteChainMutation = useDeleteChain()
+
+  const effectiveGridCols = useMemo(
+    () => (SMALL_GRID_COLS.includes(gridCols) ? FALLBACK_GRID_COLS : gridCols),
+    [gridCols]
+  )
 
   useEffect(() => {
-    setFormData({
-      runes: chain?.runes || [EMPTY_RUNE_LINES],
-      translation: chain?.translation || "",
-      note: chain?.note || "",
-    })
-  }, [chain, isEditing])
+    if (chain) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id, sequence, ...editableData } = chain
+      setFormData({ ...EMPTY_CHAIN_DATA, ...editableData })
+    } else {
+      setFormData(EMPTY_CHAIN_DATA)
+    }
+  }, [chain])
 
   useEffect(() => {
-    if (runeToAdd) {
+    const rune = consumeRune?.()
+    if (isEditing && rune) {
       setFormData((prev) => {
         const prevRunes = prev.runes
         const lastPrevRuneIndex = prevRunes.length - 1
@@ -58,13 +66,19 @@ export default function ChainCard({
             ...(prevRunes[lastPrevRuneIndex].some((v) => v)
               ? prevRunes
               : prevRunes.slice(0, lastPrevRuneIndex)),
-            runeToAdd,
+            rune,
           ],
         }
       })
-      onRuneAdded?.()
     }
-  }, [runeToAdd, onRuneAdded])
+  }, [isEditing, consumeRune])
+
+  const handleEdit = () => {
+    if (!chain?.id || !onEdit) {
+      return
+    }
+    onEdit(chain.id)
+  }
 
   const handleRuneChange = (runeIndex: number, newLines: RuneLines) => {
     const updatedRunes = [...formData.runes]
@@ -78,15 +92,24 @@ export default function ChainCard({
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
-  const handleSave = () => onSave(formData)
-  const handleEdit = () => onEdit && chain && onEdit(chain.id)
-  const handleDelete = () => onDelete && chain && onDelete(chain.id)
+  const handleSave = async () => {
+    const body = chain?.id ? { ...formData, id: chain.id } : formData
+    saveChainMutation.mutate(body)
+    onCancel()
+  }
+
+  const handleDelete = async () => {
+    if (!chain?.id) {
+      return
+    }
+    deleteChainMutation.mutate(chain.id)
+  }
 
   const {
     elementRef,
     handlers,
     buttonClasses: hiddenButtonClasses,
-  } = useTapOrHover({ isEditing })
+  } = useTapOrHover({ isDisabled: isEditing })
 
   return (
     <div
@@ -103,10 +126,11 @@ export default function ChainCard({
           value={formData.translation}
           onChange={handleFieldChange}
           placeholder="Translation"
-          className="text-xl font-bold bg-gray-900 rounded p-2 w-full mb-4"
+          className="text-xl font-bold bg-gray-900 rounded p-2 w-full mb-4 h-10"
+          autoFocus
         />
       ) : (
-        <h3 className="text-xl font-bold text-white mb-4">
+        <h3 className="text-xl font-bold text-white mb-4 pl-2 h-10 leading-10 break-all truncate">
           {chain?.translation || (
             <span className="text-gray-500">No translation</span>
           )}
@@ -133,9 +157,9 @@ export default function ChainCard({
                   : "middle"
               }
             />
-            {!isEditing && (
+            {!isEditing && onCopyRune && (
               <button
-                onClick={() => onCopyRuneToNew(runeLines)}
+                onClick={() => onCopyRune(runeLines)}
                 title="Copy to New Rune"
                 className="absolute bottom-0 left-[52%] -translate-x-1/2 p-1 bg-gray-600 text-white rounded cursor-pointer"
               >
@@ -176,42 +200,48 @@ export default function ChainCard({
         )}
       </div>
 
-      {isEditing ? (
-        <textarea
-          name="note"
-          value={formData.note}
-          onChange={handleFieldChange}
-          placeholder="Note..."
-          className="text-sm bg-gray-900 rounded p-2 w-full"
-        />
-      ) : (
-        chain?.note && (
-          <p className="text-sm text-gray-400 whitespace-pre-wrap">
-            {chain.note}
-          </p>
-        )
-      )}
+      <div className="grid grid-cols-[1fr_auto] gap-2 h-20">
+        {isEditing ? (
+          <textarea
+            name="note"
+            value={formData.note}
+            onChange={handleFieldChange}
+            placeholder="Note..."
+            className="text-sm bg-gray-900 rounded p-2 h-full w-full resize-none"
+          />
+        ) : (
+          chain?.note && (
+            <p className="text-sm text-gray-400 whitespace-pre-wrap pl-2 pt-2 break-all truncate">
+              {chain.note}
+            </p>
+          )
+        )}
 
-      {isEditing && (
-        <div className="flex justify-end gap-2 mt-4">
-          <button
-            onClick={onCancel}
-            className="p-2 bg-red-600 rounded cursor-pointer"
-          >
-            <X size={20} />
-          </button>
-          <button
-            onClick={handleSave}
-            className="p-2 bg-cyan-600 rounded cursor-pointer"
-          >
-            <Check size={20} />
-          </button>
-        </div>
-      )}
+        {isEditing && (
+          <div className="flex flex-col h-full justify-end gap-2">
+            <button
+              onClick={onCancel}
+              className="p-2 bg-red-600 rounded cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+            <button
+              onClick={handleSave}
+              className="p-2 bg-cyan-600 rounded cursor-pointer"
+            >
+              <Check size={20} />
+            </button>
+          </div>
+        )}
+      </div>
 
       {!isEditing && chain?.id && (
         <div
-          className={"absolute top-2 right-2 flex gap-2" + hiddenButtonClasses}
+          className={
+            "absolute flex gap-2 right-4 " +
+            hiddenButtonClasses +
+            (isVerticalCards ? " flex-col-reverse bottom-4" : " top-4")
+          }
         >
           <button
             onClick={handleEdit}
@@ -230,3 +260,5 @@ export default function ChainCard({
     </div>
   )
 }
+
+export default memo(ChainCard)

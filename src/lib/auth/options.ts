@@ -4,7 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import clientPromise from "@/lib/mongodb"
 import bcrypt from "bcryptjs"
 
-export const authOptions: NextAuthOptions = {
+const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
@@ -61,3 +61,5 @@ export const authOptions: NextAuthOptions = {
     error: "/",
   },
 }
+
+export default authOptions

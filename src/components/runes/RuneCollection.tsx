@@ -1,0 +1,292 @@
+import { useState, useMemo, useRef, useEffect } from "react"
+import { useConfig } from "@/context/ConfigContext"
+import SortableRuneCard from "@/components/runes/card/SortableRuneCard"
+import RuneCard from "@/components/runes/card"
+import {
+  DndContext,
+  closestCenter,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  MouseSensor,
+  TouchSensor,
+} from "@dnd-kit/core"
+import {
+  arrayMove,
+  SortableContext,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable"
+import {
+  CONSONANT_LINE_INDICES,
+  EMPTY_RUNE_DATA,
+  EMPTY_RUNE_LINES,
+  GRID_COLS_CLASSES,
+  VOWEL_LINE_INDICES,
+} from "@/lib/consts"
+import { useRunes, useUpdateRuneOrder } from "@/hooks/data/runes"
+import { Rune, RuneLines } from "@/types"
+import { useAppState } from "@/context/AppStateContext"
+import { EditStates, RuneNewFormLocations, SortingOptions } from "@/lib/enums"
+
+type RuneCollectionProps = {
+  copiedRune: RuneLines | null
+  onAddRuneForChain: (lines: RuneLines) => void
+}
+
+export default function RuneCollection({
+  copiedRune,
+  onAddRuneForChain,
+}: RuneCollectionProps) {
+  const { gridCols, sortBy } = useConfig()
+  const {
+    searchQuery,
+    searchRuneState,
+    editingId,
+    editState,
+    cancelEdit,
+    addRune,
+    editRune,
+  } = useAppState()
+
+  const { data: runes = [], isLoading } = useRunes()
+  const updateRuneOrderMutation = useUpdateRuneOrder()
+
+  const [newFormLocation, setNewFormLocation] =
+    useState<RuneNewFormLocations | null>(null)
+  useEffect(() => {
+    if (editState === EditStates.ADDING_RUNE && !newFormLocation) {
+      // trigger adding from other components
+      setNewFormLocation(RuneNewFormLocations.START)
+      runeTitleRef.current?.scrollIntoView({ behavior: "smooth" })
+    } else if (editState !== EditStates.ADDING_RUNE) {
+      // handle adding cancelation
+      setNewFormLocation(null)
+    }
+  }, [editState, newFormLocation])
+
+  const newRuneTemplate = useMemo(
+    () =>
+      copiedRune ? { ...EMPTY_RUNE_DATA, lines: copiedRune } : EMPTY_RUNE_DATA,
+    [copiedRune]
+  )
+
+  const runeTitleRef = useRef<HTMLDivElement | null>(null)
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 300, tolerance: 5 },
+    })
+  )
+
+  // prioritize more precise matches
+  const processedRunes = useMemo(() => {
+    const lowerCaseQuery = searchQuery.toLowerCase()
+    const activeSearchIndices = searchRuneState
+      .map((val, idx) => (val ? idx : -1))
+      .filter((idx) => idx !== -1)
+    const isTextSearchActive = lowerCaseQuery.length > 0
+    const isRuneSearchActive = activeSearchIndices.length > 0
+
+    const baseFiltered = runes.filter((rune) => {
+      const textMatch =
+        !isTextSearchActive ||
+        rune.translation.toLowerCase().includes(lowerCaseQuery) ||
+        rune.note.toLowerCase().includes(lowerCaseQuery)
+      const visualMatch =
+        !isRuneSearchActive ||
+        activeSearchIndices.every((searchIndex) => rune.lines[searchIndex])
+      return textMatch && visualMatch
+    })
+
+    if (!isTextSearchActive && !isRuneSearchActive) {
+      if (sortBy === SortingOptions.ALPHA) {
+        return baseFiltered.toSorted((a, b) =>
+          a.translation.localeCompare(b.translation)
+        )
+      }
+      return baseFiltered
+    }
+
+    // prioritize more precise matches
+    const priorityBuckets = {
+      exact: [] as Rune[],
+      exactLine: [] as Rune[],
+      exactText: [] as Rune[],
+      prefixText: [] as Rune[],
+      exactLineSingleType: [] as Rune[],
+      remaining: [] as Rune[],
+    }
+
+    const isExactLineMatch = (
+      a: boolean[],
+      b: boolean[],
+      indices: number[]
+    ) => {
+      if (!isRuneSearchActive) return false
+      return indices.every((i) => a[i] === b[i])
+    }
+
+    baseFiltered.forEach((rune) => {
+      const translation = rune.translation.toLowerCase()
+
+      const isExactText = isTextSearchActive && translation === lowerCaseQuery
+      const isPrefixText =
+        isTextSearchActive && translation.startsWith(lowerCaseQuery)
+      const isExactVowel =
+        isRuneSearchActive &&
+        !isExactLineMatch(rune.lines, EMPTY_RUNE_LINES, VOWEL_LINE_INDICES) &&
+        isExactLineMatch(rune.lines, searchRuneState, VOWEL_LINE_INDICES)
+      const isExactConsonant =
+        isRuneSearchActive &&
+        !isExactLineMatch(
+          rune.lines,
+          EMPTY_RUNE_LINES,
+          CONSONANT_LINE_INDICES
+        ) &&
+        isExactLineMatch(rune.lines, searchRuneState, CONSONANT_LINE_INDICES)
+
+      if (isExactText && isExactVowel && isExactConsonant) {
+        priorityBuckets.exact.push(rune)
+      } else if (isExactVowel && isExactConsonant) {
+        priorityBuckets.exactLine.push(rune)
+      } else if (isExactText) {
+        priorityBuckets.exactText.push(rune)
+      } else if (isPrefixText) {
+        priorityBuckets.prefixText.push(rune)
+      } else if (isExactVowel || isExactConsonant) {
+        priorityBuckets.exactLineSingleType.push(rune)
+      } else {
+        priorityBuckets.remaining.push(rune)
+      }
+    })
+
+    const sortedRemaining =
+      sortBy === SortingOptions.ALPHA
+        ? priorityBuckets.remaining.toSorted((a, b) =>
+            a.translation.localeCompare(b.translation)
+          )
+        : priorityBuckets.remaining
+
+    return [
+      ...priorityBuckets.exact,
+      ...priorityBuckets.exactLine,
+      ...priorityBuckets.exactText,
+      ...priorityBuckets.prefixText,
+      ...priorityBuckets.exactLineSingleType,
+      ...sortedRemaining,
+    ]
+  }, [runes, searchQuery, searchRuneState, sortBy])
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (over && active.id !== over.id) {
+      const oldIndex = runes.findIndex((item) => item.id === active.id)
+      const newIndex = runes.findIndex((item) => item.id === over.id)
+      const reorderedRunes = arrayMove(runes, oldIndex, newIndex)
+      const orderedIds = reorderedRunes.map((item) => item.id)
+      updateRuneOrderMutation.mutate(orderedIds)
+    }
+  }
+
+  const handleAdd = () => {
+    setNewFormLocation(RuneNewFormLocations.END)
+    addRune()
+  }
+
+  const isAnyFilterActive =
+    searchQuery.length > 0 || searchRuneState.some((v) => v)
+  const isDndDisabled =
+    sortBy === SortingOptions.ALPHA ||
+    isAnyFilterActive ||
+    editState !== EditStates.IDLE
+
+  const AddNewButton = (
+    <button
+      onClick={handleAdd}
+      className="flex items-center justify-center w-full h-full min-h-24 border-4 border-dashed border-gray-700 hover:border-cyan-500 rounded-lg transition-colors text-gray-500 hover:text-cyan-400 cursor-pointer"
+    >
+      <span className="text-6xl font-thin">+</span>
+    </button>
+  )
+  const NewRuneForm = (
+    <RuneCard
+      key="newRuneForm"
+      rune={newRuneTemplate}
+      isEditing
+      onCancel={cancelEdit}
+    />
+  )
+
+  const runeGrid = (
+    <div
+      className={`grid ${GRID_COLS_CLASSES[gridCols] || "grid-cols-8"} gap-4`}
+    >
+      {editState === EditStates.ADDING_RUNE &&
+        newFormLocation === RuneNewFormLocations.START &&
+        NewRuneForm}
+      {processedRunes.map((rune) => (
+        <SortableRuneCard
+          key={rune.id}
+          rune={rune}
+          isEditing={
+            editState === EditStates.EDITING_RUNE && editingId === rune.id
+          }
+          onEdit={editRune}
+          onCancel={cancelEdit}
+          onAddRuneForChain={
+            editState === EditStates.ADDING_CHAIN ||
+            editState === EditStates.EDITING_CHAIN
+              ? onAddRuneForChain
+              : undefined
+          }
+          isDndDisabled={isDndDisabled}
+        />
+      ))}
+      {editState === EditStates.ADDING_RUNE &&
+      newFormLocation === RuneNewFormLocations.END
+        ? NewRuneForm
+        : !isAnyFilterActive && editState === EditStates.IDLE
+        ? AddNewButton
+        : null}
+    </div>
+  )
+
+  return (
+    <div className="relative">
+      {/* {isRefetching && (
+        <div className="absolute inset-0 bg-gray-900/75 z-10 flex justify-center items-center">
+          <Loader2 className="h-8 w-8 text-cyan-300 animate-spin" />
+        </div>
+      )} */}
+      <h2
+        ref={runeTitleRef}
+        className="text-2xl text-center font-bold text-gray-300 mb-4"
+      >
+        Runes
+      </h2>
+      {isLoading ? (
+        <p className="text-center mb-4">Loading runes...</p>
+      ) : isAnyFilterActive && !processedRunes.length ? (
+        <div className="w-full text-center text-lg pt-4">
+          Nothing matched your search
+        </div>
+      ) : isDndDisabled ? (
+        runeGrid
+      ) : (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={processedRunes.map((r) => r.id)}
+            strategy={rectSortingStrategy}
+          >
+            {runeGrid}
+          </SortableContext>
+        </DndContext>
+      )}
+    </div>
+  )
+}

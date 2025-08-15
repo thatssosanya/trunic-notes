@@ -3,7 +3,7 @@ import clientPromise from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 import { Chain } from "@/types"
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import authOptions from "@/lib/auth/options"
 
 export default async function handler(
   req: NextApiRequest,
@@ -22,8 +22,14 @@ export default async function handler(
   switch (req.method) {
     case "GET":
       const chains = await chainsCollection.find({ userId }).toArray()
-      const chainsWithId = chains.map((c) => ({ ...c, id: c._id.toString() }))
-      res.status(200).json(chainsWithId)
+      const chainsWithStringId = chains.map((chain) => {
+        const { _id, ...rest } = chain
+        return {
+          ...rest,
+          id: _id.toString(),
+        }
+      })
+      res.status(200).json(chainsWithStringId)
       break
 
     case "POST":

@@ -1,5 +1,5 @@
 import { useConfig } from "@/context/ConfigContext"
-import RuneEditor from "@/components/RuneEditor"
+import RuneEditor from "@/components/runes/RuneEditor"
 import { PlusSquare, Search, X } from "lucide-react"
 import { useEffect, useRef } from "react"
 import {
@@ -8,34 +8,32 @@ import {
   GRID_COLS_OPTIONS,
 } from "@/lib/consts"
 import { useIsMobile } from "@/hooks/useMediaQuery"
+import { useAppState } from "@/context/AppStateContext"
+import { EditStates, SortingOptions } from "@/lib/enums"
 
 const buttonBaseClass = "px-3 py-1 text-sm rounded cursor-pointer"
 const buttonActiveClass = "bg-cyan-600 text-white"
 const buttonInactiveClass = "bg-gray-700 hover:bg-gray-600"
 
-interface GridControlsProps {
-  isModifying?: boolean
-  onAddNew: (location: "start" | "end") => void
-}
-
-export default function GridControls({
-  isModifying,
-  onAddNew,
-}: GridControlsProps) {
+export default function ConfigControls() {
   const {
     gridCols,
     setGridCols,
     isVerticalCards,
     setIsVerticalCards,
-    searchQuery,
-    setSearchQuery,
-    searchRuneState,
-    setSearchRuneState,
     sortBy,
     setSortBy,
     showInactiveLines,
     setShowInactiveLines,
   } = useConfig()
+  const {
+    searchRuneState,
+    setSearchRuneState,
+    searchQuery,
+    setSearchQuery,
+    editState,
+    addRune,
+  } = useAppState()
 
   const isRuneSearchActive = searchRuneState.some((v) => v)
   const isTextSearchActive = searchQuery.length > 0
@@ -46,7 +44,7 @@ export default function GridControls({
 
   useEffect(() => {
     const handleGlobalKeyDown = (event: KeyboardEvent) => {
-      if (isModifying) {
+      if (editState !== EditStates.IDLE) {
         return
       }
       if (event.key === "Escape") {
@@ -62,7 +60,7 @@ export default function GridControls({
     return () => {
       document.removeEventListener("keydown", handleGlobalKeyDown)
     }
-  }, [isModifying, setSearchQuery, setSearchRuneState])
+  }, [editState, setSearchQuery, setSearchRuneState])
 
   return (
     <div className="bg-gray-800 p-4 rounded-lg mb-8 grid grid-cols-1 md:grid-cols-3 gap-6 lg:max-w-lg 2xl:max-w-2xl lg:mx-auto relative">
@@ -182,17 +180,21 @@ export default function GridControls({
           <span className="text-gray-400 text-sm">Sorting:</span>
           <div className="flex gap-2">
             <button
-              onClick={() => setSortBy("alpha")}
+              onClick={() => setSortBy(SortingOptions.ALPHA)}
               className={`${buttonBaseClass} ${
-                sortBy === "alpha" ? buttonActiveClass : buttonInactiveClass
+                sortBy === SortingOptions.ALPHA
+                  ? buttonActiveClass
+                  : buttonInactiveClass
               }`}
             >
               Alpha
             </button>
             <button
-              onClick={() => setSortBy("sequence")}
+              onClick={() => setSortBy(SortingOptions.SEQUENCE)}
               className={`${buttonBaseClass} ${
-                sortBy === "sequence" ? buttonActiveClass : buttonInactiveClass
+                sortBy === SortingOptions.SEQUENCE
+                  ? buttonActiveClass
+                  : buttonInactiveClass
               }`}
             >
               Custom
@@ -200,13 +202,15 @@ export default function GridControls({
           </div>
         </div>
 
-        <button
-          onClick={() => onAddNew("start")}
-          title="Add New Rune to Top"
-          className="absolute bottom-4 right-4 w-10 h-10 flex items-center justify-center bg-gray-700 hover:bg-cyan-600 text-white rounded-lg cursor-pointer"
-        >
-          <PlusSquare size={24} />
-        </button>
+        {editState === EditStates.IDLE && (
+          <button
+            onClick={addRune}
+            title="Add New Rune to Top"
+            className="absolute bottom-4 right-4 w-10 h-10 flex items-center justify-center bg-gray-700 hover:bg-cyan-600 text-white rounded-lg cursor-pointer"
+          >
+            <PlusSquare size={24} />
+          </button>
+        )}
       </div>
     </div>
   )

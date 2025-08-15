@@ -1,26 +1,18 @@
-import { useCallback, useEffect, useState } from "react"
+import { memo, useCallback, useEffect, useState } from "react"
 import { Rune, RuneData, RuneLines } from "@/types"
-import RuneEditor from "@/components/RuneEditor"
+import RuneEditor from "@/components/runes/RuneEditor"
 import { useConfig } from "@/context/ConfigContext"
 import { Check, Pencil, Plus, Trash2, X } from "lucide-react"
-import { EMPTY_RUNE_LINES } from "@/lib/consts"
+import { EMPTY_RUNE_DATA, EMPTY_RUNE_LINES } from "@/lib/consts"
 import useTapOrHover from "@/hooks/useTapOrHover"
+import { useDeleteRune, useSaveRune } from "@/hooks/data/runes"
 
 interface RuneCardProps {
-  rune?: Rune
-  isEditing?: boolean
-  onSave: (data: RuneData) => void
-  onCancel: () => void
+  rune?: Partial<Rune>
+  isEditing: boolean
   onEdit?: (id: string) => void
-  onDelete?: (id: string) => void
-  onAddToChain?: (lines: RuneLines) => void
-}
-
-const emptyRuneData: RuneData = {
-  lines: EMPTY_RUNE_LINES,
-  translation: "",
-  isConfident: true,
-  note: "",
+  onCancel: () => void
+  onAddRuneForChain?: (lines: RuneLines) => void
 }
 
 const buttonBaseClass =
@@ -28,27 +20,40 @@ const buttonBaseClass =
 const cyanButtonClass = `${buttonBaseClass} bg-cyan-600 hover:bg-cyan-500`
 const redButtonClass = `${buttonBaseClass} bg-red-600 hover:bg-red-500`
 
-export default function RuneCard({
+function RuneCard({
   rune,
-  isEditing = false,
-  onSave,
-  onCancel,
+  isEditing,
   onEdit,
-  onDelete,
-  onAddToChain,
+  onCancel,
+  onAddRuneForChain,
 }: RuneCardProps) {
   const { isVerticalCards } = useConfig()
-  const [formData, setFormData] = useState<RuneData>(emptyRuneData)
+
+  const [formData, setFormData] = useState<RuneData>(EMPTY_RUNE_DATA)
+
+  const saveRuneMutation = useSaveRune()
+  const deleteRuneMutation = useDeleteRune()
 
   useEffect(() => {
     if (rune) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { id, sequence, ...editableData } = rune
-      setFormData(editableData)
+      setFormData({ ...EMPTY_RUNE_DATA, ...editableData })
     } else {
-      setFormData(emptyRuneData)
+      setFormData(EMPTY_RUNE_DATA)
     }
-  }, [rune, isEditing])
+  }, [rune])
+
+  const handleEdit = () => {
+    if (!rune?.id || !onEdit) {
+      return
+    }
+    onEdit(rune.id)
+  }
+
+  const handleRuneChange = (lines: RuneLines) => {
+    setFormData((prev) => ({ ...prev, lines }))
+  }
 
   const handleFieldChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -70,20 +75,17 @@ export default function RuneCard({
     }
   }
 
-  const handleRuneChange = (lines: RuneLines) => {
-    setFormData((prev) => ({ ...prev, lines }))
-  }
+  const handleSave = useCallback(async () => {
+    const body = rune?.id ? { ...formData, id: rune.id } : formData
+    saveRuneMutation.mutate(body)
+    onCancel()
+  }, [rune, formData, onCancel, saveRuneMutation])
 
-  const handleSave = useCallback(() => onSave(formData), [onSave, formData])
-  const handleEdit = () => onEdit && rune && onEdit(rune.id)
   const handleDelete = () => {
-    if (
-      onDelete &&
-      rune &&
-      window.confirm("Are you sure you want to delete this rune?")
-    ) {
-      onDelete(rune.id)
+    if (!rune?.id) {
+      return
     }
+    deleteRuneMutation.mutate(rune.id)
   }
 
   useEffect(() => {
@@ -119,7 +121,7 @@ export default function RuneCard({
     elementRef,
     handlers,
     buttonClasses: hiddenButtonClasses,
-  } = useTapOrHover({ isEditing })
+  } = useTapOrHover({ isDisabled: isEditing })
 
   // ===================================================================
   // VERTICAL CARD RENDER
@@ -199,7 +201,7 @@ export default function RuneCard({
             </>
           ) : (
             <>
-              <h2 className="col-span-2 text-lg font-bold text-white text-center h-8 flex items-center justify-center">
+              <h2 className="col-span-2 text-lg font-bold text-white text-center h-8 flex items-center justify-center break-all truncate">
                 {rune?.translation || (
                   <span className="text-gray-500">No translation</span>
                 )}
@@ -209,17 +211,17 @@ export default function RuneCard({
               </h2>
 
               {rune?.note && (
-                <div className="col-span-2 text-gray-400 text-sm w-full truncate text-center h-8 flex items-center justify-center">
+                <div className="col-span-2 text-gray-400 text-sm w-full text-center h-8 flex items-center justify-center break-all truncate">
                   {rune.note}
                 </div>
               )}
 
-              {onAddToChain ? (
+              {onAddRuneForChain && rune?.lines ? (
                 <button
-                  onClick={() => rune && onAddToChain(rune.lines)}
+                  onClick={() => rune.lines && onAddRuneForChain(rune.lines)}
                   onPointerDown={(e) => e.stopPropagation()}
                   title="Add this rune to the chain being edited"
-                  className="absolute top-1 left-1 p-1 bg-green-600 hover:bg-green-500 text-white rounded opacity-50 hover:opacity-100 transition-opacity"
+                  className="absolute top-2 left-2 p-1 bg-green-600 hover:bg-green-500 text-white rounded cursor-pointer"
                 >
                   <Plus size={20} />
                 </button>
@@ -351,7 +353,7 @@ export default function RuneCard({
         )}
       </div>
       {!isEditing && (
-        <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onPointerDown={(e) => e.stopPropagation()}
             onClick={handleEdit}
@@ -373,3 +375,5 @@ export default function RuneCard({
     </div>
   )
 }
+
+export default memo(RuneCard)

@@ -1,9 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next"
 import clientPromise from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
-import { Rune } from "@/types"
+import { DbRune, Rune } from "@/types"
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import authOptions from "@/lib/auth/options"
 
 export default async function handler(
   req: NextApiRequest,
@@ -17,7 +17,7 @@ export default async function handler(
 
   const client = await clientPromise
   const db = client.db()
-  const runesCollection = db.collection<Omit<Rune, "id">>("runes")
+  const runesCollection = db.collection<Omit<DbRune, "id">>("runes")
 
   switch (req.method) {
     case "GET":

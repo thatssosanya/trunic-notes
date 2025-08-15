@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 
-const useCallbackOnce = (callback: () => unknown) => {
+const useCallbackUntilSignal = (callback: () => unknown) => {
   const [used, setUsed] = useState(false)
   useEffect(() => {
     if (used) {
@@ -13,4 +13,4 @@ const useCallbackOnce = (callback: () => unknown) => {
   }, [callback, used, setUsed])
 }
 
-export default useCallbackOnce
+export default useCallbackUntilSignal

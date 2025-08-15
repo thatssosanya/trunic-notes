@@ -1,4 +1,4 @@
-import { RuneLines } from "@/types"
+import { ChainData, RuneData, RuneLines } from "@/types"
 
 export const GRID_COLS_MOBILE_CLASSES = {
   "1": "grid-cols-1",
@@ -15,13 +15,17 @@ export const GRID_COLS_CLASSES = {
   "16": "grid-cols-16",
   "20": "grid-cols-20",
 } as const
+
 export type GRID_COLS_OPTION = keyof typeof GRID_COLS_CLASSES
+
+// does not include default desktop option
 export const GRID_COLS_MOBILE_OPTIONS = Object.keys(
   GRID_COLS_MOBILE_CLASSES
 ) as GRID_COLS_OPTION[]
 export const GRID_COLS_OPTIONS = Object.keys(
   GRID_COLS_CLASSES
 ) as GRID_COLS_OPTION[]
+
 export const GRID_COLS_DESKTOP_DEFAULT = "8"
 export const GRID_COLS_MOBILE_DEFAULT = "2"
 
@@ -30,3 +34,16 @@ export const EMPTY_RUNE_LINES = Array(LINES_IN_RUNE).fill(false) as RuneLines
 
 export const VOWEL_LINE_INDICES = [0, 1, 6, 7, 10]
 export const CONSONANT_LINE_INDICES = [2, 3, 4, 5, 8, 9]
+
+export const EMPTY_RUNE_DATA: RuneData = {
+  lines: EMPTY_RUNE_LINES,
+  translation: "",
+  note: "",
+  isConfident: true,
+}
+
+export const EMPTY_CHAIN_DATA: ChainData = {
+  runes: [EMPTY_RUNE_LINES],
+  translation: "",
+  note: "",
+}

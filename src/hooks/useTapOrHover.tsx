@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 
-export default function useTapOrHover({ isEditing }: { isEditing: boolean }) {
+export default function useTapOrHover({ isDisabled }: { isDisabled: boolean }) {
   const [isTapped, setIsTapped] = useState(false)
 
   const elementRef = useRef<HTMLDivElement>(null)
@@ -10,10 +10,11 @@ export default function useTapOrHover({ isEditing }: { isEditing: boolean }) {
 
   const isMobile = useIsMobile()
 
-  const handleTap = () => {
-    if (isMobile && !isEditing) {
-      setIsTapped((v) => !v)
+  const registerTap = () => {
+    if (!isMobile || isDisabled) {
+      return
     }
+    setIsTapped((v) => !v)
   }
 
   const handlePointerDown = useCallback(() => {
@@ -24,7 +25,7 @@ export default function useTapOrHover({ isEditing }: { isEditing: boolean }) {
   const handlePointerUp = () => {
     const elapsed = Date.now() - pointerDownTimeRef.current
     if (!isDraggingRef.current && elapsed < 200) {
-      handleTap()
+      registerTap()
     }
   }
 

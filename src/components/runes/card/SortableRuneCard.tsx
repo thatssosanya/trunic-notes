@@ -1,12 +1,14 @@
 import React from "react"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import RuneCard from "@/components/RuneCard"
+import RuneCard from "@/components/runes/card"
 
 interface SortableRuneCardProps extends React.ComponentProps<typeof RuneCard> {
   isDndDisabled: boolean
 }
-export function SortableRuneCard(props: SortableRuneCardProps) {
+export default function SortableRuneCard(props: SortableRuneCardProps) {
+  const isDisabled = !props.rune?.id || props.isDndDisabled
+
   const {
     attributes,
     listeners,
@@ -15,14 +17,14 @@ export function SortableRuneCard(props: SortableRuneCardProps) {
     transition,
     isDragging,
   } = useSortable({
-    id: props.rune!.id,
-    disabled: props.isEditing || props.isDndDisabled,
+    id: props.rune?.id || "newRune",
+    disabled: isDisabled,
   })
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    cursor: props.isEditing || props.isDndDisabled ? "default" : "grab",
+    cursor: isDisabled ? "default" : "grab",
     zIndex: isDragging ? 10 : "auto",
     opacity: isDragging ? 0.75 : 1,
   }
@@ -31,8 +33,8 @@ export function SortableRuneCard(props: SortableRuneCardProps) {
     <div
       ref={setNodeRef}
       style={style}
-      {...(props.isEditing || props.isDndDisabled ? {} : attributes)}
-      {...(props.isEditing || props.isDndDisabled ? {} : listeners)}
+      {...(isDisabled ? {} : attributes)}
+      {...(isDisabled ? {} : listeners)}
     >
       <RuneCard {...props} />
     </div>
