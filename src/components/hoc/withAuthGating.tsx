@@ -1,5 +1,6 @@
 import { Loader2 } from "lucide-react"
 import { useSession } from "next-auth/react"
+import Head from "next/head"
 import { useRouter } from "next/router"
 import { JSX, useEffect } from "react"
 
@@ -27,6 +28,9 @@ function AuthGate({
 
   return status === "loading" || !allowed ? (
     <main className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <Head>
+        <title>Trunic Notes</title>
+      </Head>
       <Loader2 className="w-12 h-12 text-cyan-300 animate-spin" />
     </main>
   ) : (

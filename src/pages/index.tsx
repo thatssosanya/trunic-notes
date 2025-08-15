@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react"
 import { signIn } from "next-auth/react"
 import { Loader2 } from "lucide-react"
 import withAuthGating from "@/components/hoc/withAuthGating"
+import Head from "next/head"
 
 function AuthPage() {
   const [name, setName] = useState("")
@@ -71,6 +72,9 @@ function AuthPage() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-8 bg-gray-900 text-white">
+      <Head>
+        <title>Sign in — Trunic Notes</title>
+      </Head>
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-cyan-300">Trunic Notes</h1>
       </div>

@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from "react"
 import { RuneLines } from "@/types"
 import { useAppState } from "@/context/AppStateContext"
 import { EditStates } from "@/lib/enums"
+import Head from "next/head"
 
 function Notes() {
   const { isMenuOpen, setIsMenuOpen } = useConfig()
@@ -37,6 +38,9 @@ function Notes() {
 
   return (
     <main className="min-h-screen flex flex-col p-8 bg-gray-900 text-white">
+      <Head>
+        <title>Trunic Notes</title>
+      </Head>
       <div className="text-center mb-6">
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
