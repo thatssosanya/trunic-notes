@@ -91,7 +91,9 @@ export default function ChainCollection({
         <div className="mb-4">
           {isLoading ? (
             <p className="text-center mb-4">Loading chains...</p>
-          ) : isAnySearchActive && !filteredChains.length ? (
+          ) : isAnySearchActive &&
+            !filteredChains.length &&
+            editState !== EditStates.ADDING_CHAIN ? (
             <div className="w-full text-center text-lg pt-4">
               Nothing matched your search
             </div>
