@@ -49,7 +49,7 @@ const REVERSE_CIRCLE = {
 // Its visibility is controlled by the LOWER diamond's bisector (index 9).
 const DEPENDENT_CONNECTOR = {
   path: "M 0 -20 L 0 0",
-  controllerIndex: 9,
+  controllerIndices: [8, 9],
 }
 
 const getDynamicViewBox = (chainPosition?: "first" | "middle" | "last") => {
@@ -140,8 +140,9 @@ export default function RuneEditor({
 
   const isLeftConnectorActive = runeState[LEFT_CONNECTOR_SEGMENTS.index]
   const isCircleActive = runeState[REVERSE_CIRCLE.index]
-  const isDependentConnectorActive =
-    runeState[DEPENDENT_CONNECTOR.controllerIndex]
+  const isDependentConnectorActive = DEPENDENT_CONNECTOR.controllerIndices.some(
+    (i) => runeState[i]
+  )
 
   return (
     <div className="w-auto h-auto">
