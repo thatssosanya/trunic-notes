@@ -3,19 +3,11 @@ import React, {
   useContext,
   useState,
   ReactNode,
-  Dispatch,
-  SetStateAction,
   useCallback,
 } from "react"
-import { EMPTY_RUNE_LINES } from "@/lib/consts"
-import { RuneLines } from "@/types"
 import { EditStates } from "@/lib/enums"
 
 interface AppStateContextType {
-  searchQuery: string
-  setSearchQuery: Dispatch<SetStateAction<string>>
-  searchRuneState: RuneLines
-  setSearchRuneState: Dispatch<SetStateAction<RuneLines>>
   editingId: string | null
   editState: EditStates
   cancelEdit: () => void
@@ -30,10 +22,6 @@ const AppStateContext = createContext<AppStateContextType | undefined>(
 )
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [searchRuneState, setSearchRuneState] =
-    useState<RuneLines>(EMPTY_RUNE_LINES)
-
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editState, setEditState] = useState<EditStates>(EditStates.IDLE)
   const cancelEdit = useCallback(() => {
@@ -58,10 +46,6 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = {
-    searchQuery,
-    setSearchQuery,
-    searchRuneState,
-    setSearchRuneState,
     editingId,
     editState,
     cancelEdit,

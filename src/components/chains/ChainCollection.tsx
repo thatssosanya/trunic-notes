@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import ChainCard from "@/components/chains/card"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { useChains } from "@/hooks/data/chains"
@@ -6,6 +6,7 @@ import usePersistedState from "@/hooks/usePersistedState"
 import { useAppState } from "@/context/AppStateContext"
 import { EditStates } from "@/lib/enums"
 import { RuneLines } from "@/types"
+import { useSearchState } from "@/context/SearchStateContext"
 
 type ChainCollectionProps = {
   onCopyRune: (lines: RuneLines) => void
@@ -18,6 +19,12 @@ export default function ChainCollection({
   consumeRuneForChain,
   onScrollToRune,
 }: ChainCollectionProps) {
+  const {
+    isTextSearchActive,
+    searchQuery,
+    isRuneSearchActive,
+    activeSearchRuneIndices,
+  } = useSearchState()
   const { editingId, editState, cancelEdit, addChain, editChain } =
     useAppState()
 
@@ -39,6 +46,31 @@ export default function ChainCollection({
 
   const isEditing = editState === EditStates.EDITING_CHAIN
 
+  const filteredChains = useMemo(() => {
+    const baseFiltered = chains.filter((chain) => {
+      const textMatch =
+        !isTextSearchActive ||
+        chain.translation.toLowerCase().includes(searchQuery) ||
+        chain.note.toLowerCase().includes(searchQuery)
+      // TODO add text search on rune translations (currently added in ChainCard)
+      const visualMatch =
+        !isRuneSearchActive ||
+        chain.runes.some((rune) =>
+          activeSearchRuneIndices.every((searchIndex) => rune[searchIndex])
+        )
+      return textMatch && visualMatch
+    })
+    return baseFiltered
+  }, [
+    chains,
+    isTextSearchActive,
+    searchQuery,
+    isRuneSearchActive,
+    activeSearchRuneIndices,
+  ])
+
+  const isAnySearchActive = isTextSearchActive || isRuneSearchActive
+
   return (
     <div className="relative">
       {/* TODO
@@ -59,9 +91,13 @@ export default function ChainCollection({
         <div className="mb-4">
           {isLoading ? (
             <p className="text-center mb-4">Loading chains...</p>
+          ) : isAnySearchActive && !filteredChains.length ? (
+            <div className="w-full text-center text-lg pt-4">
+              Nothing matched your search
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {chains.map((chain) => {
+              {filteredChains.map((chain) => {
                 const isEditingThis = isEditing && editingId === chain.id
                 return (
                   <ChainCard

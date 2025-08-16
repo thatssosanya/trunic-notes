@@ -10,12 +10,21 @@ import {
 import { useIsMobile } from "@/hooks/useMediaQuery"
 import { useAppState } from "@/context/AppStateContext"
 import { EditStates, SortingOptions } from "@/lib/enums"
+import { useSearchState } from "@/context/SearchStateContext"
 
 const buttonBaseClass = "px-3 py-1 text-sm rounded cursor-pointer"
 const buttonActiveClass = "bg-cyan-600 text-white"
 const buttonInactiveClass = "bg-gray-700 hover:bg-gray-600"
 
 export default function ConfigControls() {
+  const {
+    isTextSearchActive,
+    searchQuery,
+    setSearchQuery,
+    isRuneSearchActive,
+    searchRuneState,
+    setSearchRuneState,
+  } = useSearchState()
   const {
     gridCols,
     setGridCols,
@@ -26,17 +35,7 @@ export default function ConfigControls() {
     showInactiveLines,
     setShowInactiveLines,
   } = useConfig()
-  const {
-    searchRuneState,
-    setSearchRuneState,
-    searchQuery,
-    setSearchQuery,
-    editState,
-    addRune,
-  } = useAppState()
-
-  const isRuneSearchActive = searchRuneState.some((v) => v)
-  const isTextSearchActive = searchQuery.length > 0
+  const { editState, addRune } = useAppState()
 
   const searchInputRef = useRef<HTMLInputElement>(null)
 

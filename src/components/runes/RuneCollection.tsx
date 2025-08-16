@@ -27,6 +27,7 @@ import { useAppState } from "@/context/AppStateContext"
 import { EditStates, RuneNewFormLocations, SortingOptions } from "@/lib/enums"
 import { isExactLineMatch } from "@/lib/runes"
 import { GRID_COLS_CLASSES } from "@/styles"
+import { useSearchState } from "@/context/SearchStateContext"
 
 type RuneCollectionProps = {
   copiedRune: RuneLines | null
@@ -43,14 +44,13 @@ export default function RuneCollection({
 }: RuneCollectionProps) {
   const { gridCols, sortBy } = useConfig()
   const {
+    isTextSearchActive,
     searchQuery,
+    isRuneSearchActive,
     searchRuneState,
-    editingId,
-    editState,
-    cancelEdit,
-    addRune,
-    editRune,
-  } = useAppState()
+    activeSearchRuneIndices,
+  } = useSearchState()
+  const { editingId, editState, cancelEdit, addRune, editRune } = useAppState()
 
   const { data: runes = [], isLoading } = useRunes()
   const updateRuneOrderMutation = useUpdateRuneOrder()
@@ -83,21 +83,14 @@ export default function RuneCollection({
   )
 
   const processedRunes = useMemo(() => {
-    const lowerCaseQuery = searchQuery.toLowerCase()
-    const activeSearchIndices = searchRuneState
-      .map((val, idx) => (val ? idx : -1))
-      .filter((idx) => idx !== -1)
-    const isTextSearchActive = lowerCaseQuery.length > 0
-    const isRuneSearchActive = activeSearchIndices.length > 0
-
     const baseFiltered = runes.filter((rune) => {
       const textMatch =
         !isTextSearchActive ||
-        rune.translation.toLowerCase().includes(lowerCaseQuery) ||
-        rune.note.toLowerCase().includes(lowerCaseQuery)
+        rune.translation.toLowerCase().includes(searchQuery) ||
+        rune.note.toLowerCase().includes(searchQuery)
       const visualMatch =
         !isRuneSearchActive ||
-        activeSearchIndices.every((searchIndex) => rune.lines[searchIndex])
+        activeSearchRuneIndices.every((searchIndex) => rune.lines[searchIndex])
       return textMatch && visualMatch
     })
 
@@ -123,9 +116,9 @@ export default function RuneCollection({
     baseFiltered.forEach((rune) => {
       const translation = rune.translation.toLowerCase()
 
-      const isExactText = isTextSearchActive && translation === lowerCaseQuery
+      const isExactText = isTextSearchActive && translation === searchQuery
       const isPrefixText =
-        isTextSearchActive && translation.startsWith(lowerCaseQuery)
+        isTextSearchActive && translation.startsWith(searchQuery)
       const isExactVowel =
         isRuneSearchActive &&
         isExactLineMatch(rune.lines, searchRuneState, VOWEL_LINE_INDICES)
@@ -163,7 +156,15 @@ export default function RuneCollection({
       ...priorityBuckets.exactLineSingleType,
       ...sortedRemaining,
     ]
-  }, [runes, searchQuery, searchRuneState, sortBy])
+  }, [
+    runes,
+    isTextSearchActive,
+    searchQuery,
+    isRuneSearchActive,
+    searchRuneState,
+    activeSearchRuneIndices,
+    sortBy,
+  ])
 
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
@@ -181,11 +182,10 @@ export default function RuneCollection({
     addRune()
   }
 
-  const isAnyFilterActive =
-    searchQuery.length > 0 || searchRuneState.some((v) => v)
+  const isAnySearchActive = isTextSearchActive || isRuneSearchActive
   const isDndDisabled =
     sortBy === SortingOptions.ALPHA ||
-    isAnyFilterActive ||
+    isAnySearchActive ||
     editState !== EditStates.IDLE
 
   const AddNewButton = (
@@ -249,7 +249,7 @@ export default function RuneCollection({
       {editState === EditStates.ADDING_RUNE &&
       newFormLocation === RuneNewFormLocations.END
         ? NewRuneForm
-        : !isAnyFilterActive && editState === EditStates.IDLE
+        : !isAnySearchActive && editState === EditStates.IDLE
         ? AddNewButton
         : null}
     </div>
@@ -268,7 +268,7 @@ export default function RuneCollection({
       </h2>
       {isLoading ? (
         <p className="text-center mb-4">Loading runes...</p>
-      ) : isAnyFilterActive && !processedRunes.length ? (
+      ) : isAnySearchActive && !processedRunes.length ? (
         <div className="w-full text-center text-lg pt-4">
           Nothing matched your search
         </div>
