@@ -1,4 +1,3 @@
-// context/AppStateContext.tsx
 import React, {
   createContext,
   useContext,

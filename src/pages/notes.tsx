@@ -15,17 +15,17 @@ function Notes() {
   const { isMenuOpen, setIsMenuOpen } = useConfig()
   const { editState, addRune } = useAppState()
 
-  const [copiedRune, _setCopiedRune] = useState<RuneLines | null>(null)
-  const setCopiedRune = useCallback(
+  const [copiedRune, setCopiedRune] = useState<RuneLines | null>(null)
+  const onCopyRune = useCallback(
     (lines: RuneLines) => {
-      _setCopiedRune(lines)
+      setCopiedRune(lines)
       addRune()
     },
     [addRune]
   )
   useEffect(() => {
     if (editState === EditStates.IDLE) {
-      _setCopiedRune(null)
+      setCopiedRune(null)
     }
   }, [editState])
 
@@ -35,6 +35,9 @@ function Notes() {
     setRuneForChain(null)
     return rune
   }, [runeForChain])
+
+  const [runeIdToScroll, setRuneIdToScroll] = useState<string | null>(null)
+  const onScrollComplete = useCallback(() => setRuneIdToScroll(null), [])
 
   return (
     <main className="min-h-screen flex flex-col p-8 bg-gray-900 text-white">
@@ -60,13 +63,16 @@ function Notes() {
       {isMenuOpen && <ConfigControls />}
 
       <ChainCollection
-        onCopyRune={setCopiedRune}
+        onCopyRune={onCopyRune}
         consumeRuneForChain={consumeRuneForChain}
+        onScrollToRune={setRuneIdToScroll}
       />
 
       <RuneCollection
         copiedRune={copiedRune}
         onAddRuneForChain={setRuneForChain}
+        runeIdToScroll={runeIdToScroll}
+        onScrollComplete={onScrollComplete}
       />
 
       <div className="mt-auto w-full flex justify-center pt-4">

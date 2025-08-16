@@ -1,24 +1,28 @@
-import { memo, useEffect, useMemo, useState } from "react"
+import { memo, useCallback, useEffect, useMemo, useState } from "react"
 import { Chain, RuneLines } from "@/types"
 import RuneEditor from "@/components/runes/RuneEditor"
 import { Check, FilePlus, Pencil, Trash2, X } from "lucide-react"
 import {
   EMPTY_CHAIN_DATA,
   EMPTY_RUNE_LINES,
-  GRID_COLS_CLASSES,
   GRID_COLS_OPTION,
 } from "@/lib/consts"
 import { useConfig } from "@/context/ConfigContext"
 import useTapOrHover from "@/hooks/useTapOrHover"
 import { useDeleteChain, useSaveChain } from "@/hooks/data/chains"
+import { useRunes } from "@/hooks/data/runes"
+import { GRID_COLS_CLASSES } from "@/styles"
+import { isExactLineMatch } from "@/lib/runes"
 
 interface ChainCardProps {
   chain?: Partial<Chain>
   isEditing: boolean
   onEdit?: (id: string) => void
+  isOtherFormActive?: boolean
   onCancel: () => void
   onCopyRune?: (lines: RuneLines) => void
   consumeRune?: () => RuneLines | null
+  onScrollToRune?: (id: string) => void
 }
 
 const SMALL_GRID_COLS = ["1", "2", "3"] as GRID_COLS_OPTION[]
@@ -28,22 +32,25 @@ function ChainCard({
   chain,
   isEditing,
   onEdit,
+  isOtherFormActive,
   onCancel,
   onCopyRune,
   consumeRune,
+  onScrollToRune,
 }: ChainCardProps) {
+  const {
+    elementRef,
+    handlers,
+    buttonClasses: hiddenButtonClasses,
+  } = useTapOrHover({ isDisabled: isEditing })
+
   const { gridCols, isVerticalCards } = useConfig()
 
-  const [formData, setFormData] = useState(EMPTY_CHAIN_DATA)
-
+  const { data: runes = [] } = useRunes()
   const saveChainMutation = useSaveChain()
   const deleteChainMutation = useDeleteChain()
 
-  const effectiveGridCols = useMemo(
-    () => (SMALL_GRID_COLS.includes(gridCols) ? FALLBACK_GRID_COLS : gridCols),
-    [gridCols]
-  )
-
+  const [formData, setFormData] = useState(EMPTY_CHAIN_DATA)
   useEffect(() => {
     if (chain) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -53,6 +60,22 @@ function ChainCard({
       setFormData(EMPTY_CHAIN_DATA)
     }
   }, [chain])
+
+  const runesWithTranslations = useMemo(
+    () =>
+      formData.runes.map((rune) => {
+        const runeRecord = runes.find((runeRecord) =>
+          isExactLineMatch(rune, runeRecord.lines)
+        )
+        return runeRecord ?? { id: "", lines: rune, translation: "" }
+      }),
+    [formData.runes, runes]
+  )
+
+  const effectiveGridCols = useMemo(
+    () => (SMALL_GRID_COLS.includes(gridCols) ? FALLBACK_GRID_COLS : gridCols),
+    [gridCols]
+  )
 
   useEffect(() => {
     const rune = consumeRune?.()
@@ -92,11 +115,11 @@ function ChainCard({
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     const body = chain?.id ? { ...formData, id: chain.id } : formData
     saveChainMutation.mutate(body)
     onCancel()
-  }
+  }, [chain, formData, onCancel, saveChainMutation])
 
   const handleDelete = async () => {
     if (!chain?.id) {
@@ -105,11 +128,34 @@ function ChainCard({
     deleteChainMutation.mutate(chain.id)
   }
 
-  const {
-    elementRef,
-    handlers,
-    buttonClasses: hiddenButtonClasses,
-  } = useTapOrHover({ isDisabled: isEditing })
+  useEffect(() => {
+    if (!isEditing) {
+      return
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault()
+        onCancel()
+      }
+
+      // enter to save, enter + mod to add newline in textarea
+      if (event.key === "Enter") {
+        if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
+          return
+        }
+
+        event.preventDefault()
+        handleSave()
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown)
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [isEditing, handleSave, onCancel])
 
   return (
     <div
@@ -139,15 +185,15 @@ function ChainCard({
 
       <div
         className={
-          "grid p-4 rounded-md " +
+          "grid p-4 pt-6 rounded-md " +
           (GRID_COLS_CLASSES[effectiveGridCols] || "grid-cols-8")
         }
       >
-        {formData.runes.map((runeLines, index, arr) => (
-          <div key={index} className="relative grid grid-cols-1 pb-8">
+        {runesWithTranslations.map((rune, index, arr) => (
+          <div key={index} className="relative grid grid-cols-1">
             <RuneEditor
               isEditing={isEditing}
-              runeState={runeLines}
+              runeState={rune.lines}
               setRuneState={(newLines) => handleRuneChange(index, newLines)}
               chainPosition={
                 index === 0
@@ -157,15 +203,27 @@ function ChainCard({
                   : "middle"
               }
             />
-            {!isEditing && onCopyRune && (
-              <button
-                onClick={() => onCopyRune(runeLines)}
-                title="Copy to New Rune"
-                className="absolute bottom-0 left-[52%] -translate-x-1/2 p-1 bg-gray-600 text-white rounded cursor-pointer"
-              >
-                <FilePlus size={20} />
-              </button>
-            )}
+            {!isEditing &&
+              !isOtherFormActive &&
+              (rune.id && onScrollToRune ? (
+                <button
+                  onClick={() => onScrollToRune(rune.id)}
+                  title="Edit Rune"
+                  className="absolute top-0 -translate-y-full left-[53%] -translate-x-1/2 p-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded cursor-pointer"
+                >
+                  <Pencil size={20} />
+                </button>
+              ) : (
+                onCopyRune && (
+                  <button
+                    onClick={() => onCopyRune(rune.lines)}
+                    title="Copy to New Rune"
+                    className="absolute top-0 -translate-y-full left-[53%] -translate-x-1/2 p-1 bg-gray-600 text-white rounded cursor-pointer"
+                  >
+                    <FilePlus size={20} />
+                  </button>
+                )
+              ))}
             {isEditing && arr.length > 1 && (
               <button
                 onClick={() =>
@@ -178,11 +236,14 @@ function ChainCard({
                   }))
                 }
                 title="Delete from Chain"
-                className="absolute bottom-0 left-[52%] -translate-x-1/2 p-1 bg-red-600 text-white rounded cursor-pointer"
+                className="absolute top-0 -translate-y-full left-[53%] -translate-x-1/2 p-1 bg-red-600 text-white rounded cursor-pointer"
               >
                 <X size={20} />
               </button>
             )}
+            <h2 className="col-span-2 text-lg font-bold text-white text-center h-8 flex items-center justify-center break-all truncate">
+              {rune.translation}
+            </h2>
           </div>
         ))}
         {isEditing && (
@@ -227,7 +288,7 @@ function ChainCard({
             </button>
             <button
               onClick={handleSave}
-              className="p-2 bg-cyan-600 rounded cursor-pointer"
+              className="p-2 bg-cyan-600 hover:bg-cyan-500 rounded cursor-pointer"
             >
               <Check size={20} />
             </button>
@@ -235,7 +296,7 @@ function ChainCard({
         )}
       </div>
 
-      {!isEditing && chain?.id && (
+      {!isEditing && !isOtherFormActive && chain?.id && (
         <div
           className={
             "absolute flex gap-2 right-4 " +
@@ -245,13 +306,15 @@ function ChainCard({
         >
           <button
             onClick={handleEdit}
-            className={"p-2 bg-cyan-600 rounded cursor-pointer"}
+            className={
+              "p-2 bg-cyan-600 hover:bg-cyan-500 rounded cursor-pointer"
+            }
           >
             <Pencil size={20} />
           </button>
           <button
             onClick={handleDelete}
-            className={"p-2 bg-red-600 rounded cursor-pointer"}
+            className={"p-2 bg-red-600 hover:bg-red-500 rounded cursor-pointer"}
           >
             <Trash2 size={20} />
           </button>

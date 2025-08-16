@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useConfig } from "@/context/ConfigContext"
 import SortableRuneCard from "@/components/runes/card/SortableRuneCard"
 import RuneCard from "@/components/runes/card"
@@ -19,23 +19,27 @@ import {
 import {
   CONSONANT_LINE_INDICES,
   EMPTY_RUNE_DATA,
-  EMPTY_RUNE_LINES,
-  GRID_COLS_CLASSES,
   VOWEL_LINE_INDICES,
 } from "@/lib/consts"
 import { useRunes, useUpdateRuneOrder } from "@/hooks/data/runes"
 import { Rune, RuneLines } from "@/types"
 import { useAppState } from "@/context/AppStateContext"
 import { EditStates, RuneNewFormLocations, SortingOptions } from "@/lib/enums"
+import { isExactLineMatch } from "@/lib/runes"
+import { GRID_COLS_CLASSES } from "@/styles"
 
 type RuneCollectionProps = {
   copiedRune: RuneLines | null
   onAddRuneForChain: (lines: RuneLines) => void
+  runeIdToScroll: string | null
+  onScrollComplete: () => void
 }
 
 export default function RuneCollection({
   copiedRune,
   onAddRuneForChain,
+  runeIdToScroll,
+  onScrollComplete,
 }: RuneCollectionProps) {
   const { gridCols, sortBy } = useConfig()
   const {
@@ -53,14 +57,15 @@ export default function RuneCollection({
 
   const [newFormLocation, setNewFormLocation] =
     useState<RuneNewFormLocations | null>(null)
+  const [isNewFormEditing, setIsNewFormEditing] = useState(false)
   useEffect(() => {
     if (editState === EditStates.ADDING_RUNE && !newFormLocation) {
-      // trigger adding from other components
       setNewFormLocation(RuneNewFormLocations.START)
-      runeTitleRef.current?.scrollIntoView({ behavior: "smooth" })
+      setIsNewFormEditing(false)
     } else if (editState !== EditStates.ADDING_RUNE) {
       // handle adding cancelation
       setNewFormLocation(null)
+      setIsNewFormEditing(false)
     }
   }, [editState, newFormLocation])
 
@@ -70,8 +75,6 @@ export default function RuneCollection({
     [copiedRune]
   )
 
-  const runeTitleRef = useRef<HTMLDivElement | null>(null)
-
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
     useSensor(TouchSensor, {
@@ -79,7 +82,6 @@ export default function RuneCollection({
     })
   )
 
-  // prioritize more precise matches
   const processedRunes = useMemo(() => {
     const lowerCaseQuery = searchQuery.toLowerCase()
     const activeSearchIndices = searchRuneState
@@ -118,15 +120,6 @@ export default function RuneCollection({
       remaining: [] as Rune[],
     }
 
-    const isExactLineMatch = (
-      a: boolean[],
-      b: boolean[],
-      indices: number[]
-    ) => {
-      if (!isRuneSearchActive) return false
-      return indices.every((i) => a[i] === b[i])
-    }
-
     baseFiltered.forEach((rune) => {
       const translation = rune.translation.toLowerCase()
 
@@ -135,15 +128,9 @@ export default function RuneCollection({
         isTextSearchActive && translation.startsWith(lowerCaseQuery)
       const isExactVowel =
         isRuneSearchActive &&
-        !isExactLineMatch(rune.lines, EMPTY_RUNE_LINES, VOWEL_LINE_INDICES) &&
         isExactLineMatch(rune.lines, searchRuneState, VOWEL_LINE_INDICES)
       const isExactConsonant =
         isRuneSearchActive &&
-        !isExactLineMatch(
-          rune.lines,
-          EMPTY_RUNE_LINES,
-          CONSONANT_LINE_INDICES
-        ) &&
         isExactLineMatch(rune.lines, searchRuneState, CONSONANT_LINE_INDICES)
 
       if (isExactText && isExactVowel && isExactConsonant) {
@@ -209,14 +196,25 @@ export default function RuneCollection({
       <span className="text-6xl font-thin">+</span>
     </button>
   )
-  const NewRuneForm = (
-    <RuneCard
-      key="newRuneForm"
-      rune={newRuneTemplate}
-      isEditing
-      onCancel={cancelEdit}
-    />
-  )
+
+  const NewRuneForm =
+    newFormLocation === RuneNewFormLocations.END || isNewFormEditing ? (
+      <RuneCard
+        key="newRuneForm"
+        rune={newRuneTemplate}
+        isEditing
+        onCancel={cancelEdit}
+      />
+    ) : (
+      <RuneCard
+        key="newRuneForm"
+        rune={{ ...newRuneTemplate, id: "newRuneForm" }}
+        shouldScroll
+        onScrollComplete={() => setIsNewFormEditing(true)}
+        isEditing={false}
+        onCancel={cancelEdit}
+      />
+    )
 
   const runeGrid = (
     <div
@@ -225,24 +223,29 @@ export default function RuneCollection({
       {editState === EditStates.ADDING_RUNE &&
         newFormLocation === RuneNewFormLocations.START &&
         NewRuneForm}
-      {processedRunes.map((rune) => (
-        <SortableRuneCard
-          key={rune.id}
-          rune={rune}
-          isEditing={
-            editState === EditStates.EDITING_RUNE && editingId === rune.id
-          }
-          onEdit={editRune}
-          onCancel={cancelEdit}
-          onAddRuneForChain={
-            editState === EditStates.ADDING_CHAIN ||
-            editState === EditStates.EDITING_CHAIN
-              ? onAddRuneForChain
-              : undefined
-          }
-          isDndDisabled={isDndDisabled}
-        />
-      ))}
+      {processedRunes.map((rune) => {
+        const isEditingThis =
+          editState === EditStates.EDITING_RUNE && editingId === rune.id
+        return (
+          <SortableRuneCard
+            key={rune.id}
+            rune={rune}
+            isEditing={isEditingThis}
+            onEdit={editRune}
+            onCancel={cancelEdit}
+            isOtherFormActive={editState !== EditStates.IDLE && !isEditingThis}
+            onAddRuneForChain={
+              editState === EditStates.ADDING_CHAIN ||
+              editState === EditStates.EDITING_CHAIN
+                ? onAddRuneForChain
+                : undefined
+            }
+            shouldScroll={rune.id === runeIdToScroll}
+            onScrollComplete={onScrollComplete}
+            isDndDisabled={isDndDisabled}
+          />
+        )
+      })}
       {editState === EditStates.ADDING_RUNE &&
       newFormLocation === RuneNewFormLocations.END
         ? NewRuneForm
@@ -254,15 +257,13 @@ export default function RuneCollection({
 
   return (
     <div className="relative">
-      {/* {isRefetching && (
+      {/* TODO
+      {isRefetching && (
         <div className="absolute inset-0 bg-gray-900/75 z-10 flex justify-center items-center">
           <Loader2 className="h-8 w-8 text-cyan-300 animate-spin" />
         </div>
       )} */}
-      <h2
-        ref={runeTitleRef}
-        className="text-2xl text-center font-bold text-gray-300 mb-4"
-      >
+      <h2 className="text-2xl text-center font-bold text-gray-300 mb-4">
         Runes
       </h2>
       {isLoading ? (

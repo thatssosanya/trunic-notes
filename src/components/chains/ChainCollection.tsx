@@ -10,14 +10,19 @@ import { RuneLines } from "@/types"
 type ChainCollectionProps = {
   onCopyRune: (lines: RuneLines) => void
   consumeRuneForChain: () => RuneLines | null
+  onScrollToRune: (id: string) => void
 }
 
 export default function ChainCollection({
   onCopyRune,
   consumeRuneForChain,
+  onScrollToRune,
 }: ChainCollectionProps) {
   const { editingId, editState, cancelEdit, addChain, editChain } =
     useAppState()
+
+  const { data: chains = [], isLoading } = useChains()
+
   const [showChainsSection, setShowChainsSection] = usePersistedState(
     "trunic-show-chains-section",
     false
@@ -32,13 +37,12 @@ export default function ChainCollection({
     }
   }, [showChainsSection, editState, cancelEdit])
 
-  const { data: chains = [], isLoading } = useChains()
-
   const isEditing = editState === EditStates.EDITING_CHAIN
 
   return (
     <div className="relative">
-      {/* {isRefetching && (
+      {/* TODO
+      {isRefetching && (
         <div className="absolute inset-0 bg-gray-900/75 z-10 flex justify-center items-center">
           <Loader2 className="h-8 w-8 text-cyan-300 animate-spin" />
         </div>
@@ -65,6 +69,9 @@ export default function ChainCollection({
                     chain={chain}
                     isEditing={isEditingThis}
                     onEdit={editChain}
+                    isOtherFormActive={
+                      editState !== EditStates.IDLE && !isEditingThis
+                    }
                     onCancel={cancelEdit}
                     onCopyRune={
                       editState === EditStates.IDLE ? onCopyRune : undefined
@@ -72,6 +79,7 @@ export default function ChainCollection({
                     consumeRune={
                       isEditingThis ? consumeRuneForChain : undefined
                     }
+                    onScrollToRune={onScrollToRune}
                   />
                 )
               })}

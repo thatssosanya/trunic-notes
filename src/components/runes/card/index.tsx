@@ -12,7 +12,10 @@ interface RuneCardProps {
   isEditing: boolean
   onEdit?: (id: string) => void
   onCancel: () => void
+  isOtherFormActive?: boolean
   onAddRuneForChain?: (lines: RuneLines) => void
+  shouldScroll?: boolean
+  onScrollComplete?: () => void
 }
 
 const buttonBaseClass =
@@ -25,8 +28,17 @@ function RuneCard({
   isEditing,
   onEdit,
   onCancel,
+  isOtherFormActive,
   onAddRuneForChain,
+  shouldScroll,
+  onScrollComplete,
 }: RuneCardProps) {
+  const {
+    elementRef,
+    handlers,
+    buttonClasses: hiddenButtonClasses,
+  } = useTapOrHover({ isDisabled: isEditing })
+
   const { isVerticalCards } = useConfig()
 
   const [formData, setFormData] = useState<RuneData>(EMPTY_RUNE_DATA)
@@ -89,6 +101,40 @@ function RuneCard({
   }
 
   useEffect(() => {
+    if (!shouldScroll || !elementRef.current) {
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && entry.intersectionRatio >= 1) {
+          if (rune?.id) {
+            onEdit?.(rune.id)
+          }
+
+          onScrollComplete?.()
+
+          observer.disconnect()
+        }
+      },
+      {
+        threshold: 1.0,
+      }
+    )
+
+    observer.observe(elementRef.current)
+
+    elementRef.current.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    })
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [rune?.id, onEdit, shouldScroll, onScrollComplete, elementRef])
+
+  useEffect(() => {
     if (!isEditing) {
       return
     }
@@ -116,12 +162,6 @@ function RuneCard({
       document.removeEventListener("keydown", handleKeyDown)
     }
   }, [isEditing, handleSave, onCancel])
-
-  const {
-    elementRef,
-    handlers,
-    buttonClasses: hiddenButtonClasses,
-  } = useTapOrHover({ isDisabled: isEditing })
 
   // ===================================================================
   // VERTICAL CARD RENDER
@@ -226,29 +266,31 @@ function RuneCard({
                   <Plus size={20} />
                 </button>
               ) : (
-                <div
-                  className={
-                    "absolute bottom-3 right-3 flex flex-col gap-2" +
-                    hiddenButtonClasses
-                  }
-                >
-                  <button
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={handleDelete}
-                    title="Delete"
-                    className={redButtonClass}
+                !isOtherFormActive && (
+                  <div
+                    className={
+                      "absolute bottom-3 right-3 flex flex-col gap-2" +
+                      hiddenButtonClasses
+                    }
                   >
-                    <Trash2 size={18} />
-                  </button>
-                  <button
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={handleEdit}
-                    title="Edit"
-                    className={cyanButtonClass}
-                  >
-                    <Pencil size={18} />
-                  </button>
-                </div>
+                    <button
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={handleDelete}
+                      title="Delete"
+                      className={redButtonClass}
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                    <button
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={handleEdit}
+                      title="Edit"
+                      className={cyanButtonClass}
+                    >
+                      <Pencil size={18} />
+                    </button>
+                  </div>
+                )
               )}
             </>
           )}
