@@ -13,8 +13,8 @@ export default async function handler(
   if (!session?.user?.id) {
     return res.status(401).json({ message: "Not authenticated" })
   }
-
   const userId = session.user.id
+
   const client = await clientPromise
   const db = client.db()
   const chainsCollection = db.collection("chains")

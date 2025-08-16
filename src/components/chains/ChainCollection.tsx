@@ -127,7 +127,8 @@ export default function ChainCollection({
                   consumeRune={consumeRuneForChain}
                 />
               ) : (
-                editState === EditStates.IDLE && (
+                editState === EditStates.IDLE &&
+                !isAnySearchActive && (
                   <button
                     onClick={addChain}
                     className="flex items-center justify-center w-full h-full min-h-24 border-4 border-dashed border-gray-700 hover:border-cyan-500 rounded-lg transition-colors text-gray-500 hover:text-cyan-400 cursor-pointer"
