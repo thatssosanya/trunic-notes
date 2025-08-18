@@ -20,12 +20,12 @@ import {
   CONSONANT_LINE_INDICES,
   EMPTY_RUNE_DATA,
   VOWEL_LINE_INDICES,
-} from "@/lib/consts"
+} from "@/utils/consts"
 import { useRunes, useUpdateRuneOrder } from "@/hooks/data/runes"
 import { Rune, RuneLines } from "@/types"
 import { useAppState } from "@/context/AppStateContext"
-import { EditStates, RuneNewFormLocations, SortingOptions } from "@/lib/enums"
-import { isExactLineMatch } from "@/lib/runes"
+import { EditStates, RuneNewFormLocations, SortingOptions } from "@/utils/enums"
+import { isExactLineMatch } from "@/utils/runes"
 import { GRID_COLS_CLASSES } from "@/styles"
 import { useSearchState } from "@/context/SearchStateContext"
 

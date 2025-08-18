@@ -5,7 +5,7 @@ import React, {
   ReactNode,
   useCallback,
 } from "react"
-import { EditStates } from "@/lib/enums"
+import { EditStates } from "@/utils/enums"
 
 interface AppStateContextType {
   editingId: string | null

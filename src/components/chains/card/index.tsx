@@ -6,13 +6,13 @@ import {
   EMPTY_CHAIN_DATA,
   EMPTY_RUNE_LINES,
   GRID_COLS_OPTION,
-} from "@/lib/consts"
+} from "@/utils/consts"
 import { useConfig } from "@/context/ConfigContext"
 import useTapOrHover from "@/hooks/useTapOrHover"
 import { useDeleteChain, useSaveChain } from "@/hooks/data/chains"
 import { useRunes } from "@/hooks/data/runes"
 import { GRID_COLS_CLASSES } from "@/styles"
-import { isExactLineMatch } from "@/lib/runes"
+import { isExactLineMatch } from "@/utils/runes"
 
 interface ChainCardProps {
   chain?: Partial<Chain>
@@ -261,40 +261,40 @@ function ChainCard({
         )}
       </div>
 
-      <div className="grid grid-cols-[1fr_auto] gap-2 h-20">
+      <div className="pr-12 h-12">
         {isEditing ? (
           <textarea
             name="note"
             value={formData.note}
             onChange={handleFieldChange}
             placeholder="Note..."
-            className="text-sm bg-gray-900 rounded p-2 h-full w-full resize-none"
+            className="text-sm bg-gray-900 rounded p-1 h-full w-full resize-none"
           />
         ) : (
           chain?.note && (
-            <p className="text-sm text-gray-400 whitespace-pre-wrap pl-2 pt-2 break-all truncate">
+            <p className="text-sm text-gray-400 whitespace-pre-wrap h-full p-1 break-all truncate">
               {chain.note}
             </p>
           )
         )}
-
-        {isEditing && (
-          <div className="flex flex-col h-full justify-end gap-2">
-            <button
-              onClick={onCancel}
-              className="p-2 bg-red-600 rounded cursor-pointer"
-            >
-              <X size={20} />
-            </button>
-            <button
-              onClick={handleSave}
-              className="p-2 bg-cyan-600 hover:bg-cyan-500 rounded cursor-pointer"
-            >
-              <Check size={20} />
-            </button>
-          </div>
-        )}
       </div>
+
+      {isEditing && (
+        <div className="flex flex-col h-full justify-end gap-2 absolute bottom-4 right-4">
+          <button
+            onClick={onCancel}
+            className="p-2 bg-red-600 rounded cursor-pointer"
+          >
+            <X size={20} />
+          </button>
+          <button
+            onClick={handleSave}
+            className="p-2 bg-cyan-600 hover:bg-cyan-500 rounded cursor-pointer"
+          >
+            <Check size={20} />
+          </button>
+        </div>
+      )}
 
       {!isEditing && !isOtherFormActive && chain?.id && (
         <div

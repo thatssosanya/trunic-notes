@@ -8,7 +8,7 @@ import RuneCollection from "@/components/runes/RuneCollection"
 import { useCallback, useEffect, useState } from "react"
 import { RuneLines } from "@/types"
 import { useAppState } from "@/context/AppStateContext"
-import { EditStates } from "@/lib/enums"
+import { EditStates } from "@/utils/enums"
 import Head from "next/head"
 
 function Notes() {

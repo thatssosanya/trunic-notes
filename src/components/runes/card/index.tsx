@@ -3,7 +3,7 @@ import { Rune, RuneData, RuneLines } from "@/types"
 import RuneEditor from "@/components/runes/RuneEditor"
 import { useConfig } from "@/context/ConfigContext"
 import { Check, Pencil, Plus, Trash2, X } from "lucide-react"
-import { EMPTY_RUNE_DATA, EMPTY_RUNE_LINES } from "@/lib/consts"
+import { EMPTY_RUNE_DATA, EMPTY_RUNE_LINES } from "@/utils/consts"
 import useTapOrHover from "@/hooks/useTapOrHover"
 import { useDeleteRune, useSaveRune } from "@/hooks/data/runes"
 
@@ -41,7 +41,10 @@ function RuneCard({
 
   const { isVerticalCards } = useConfig()
 
-  const [formData, setFormData] = useState<RuneData>(EMPTY_RUNE_DATA)
+  const [formData, setFormData] = useState<RuneData>({
+    ...EMPTY_RUNE_DATA,
+    ...rune,
+  })
 
   const saveRuneMutation = useSaveRune()
   const deleteRuneMutation = useDeleteRune()
@@ -49,8 +52,7 @@ function RuneCard({
   useEffect(() => {
     if (rune) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { id, sequence, ...editableData } = rune
-      setFormData({ ...EMPTY_RUNE_DATA, ...editableData })
+      setFormData({ ...EMPTY_RUNE_DATA, ...rune })
     } else {
       setFormData(EMPTY_RUNE_DATA)
     }

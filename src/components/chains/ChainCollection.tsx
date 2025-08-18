@@ -4,7 +4,7 @@ import { ChevronDown, ChevronUp } from "lucide-react"
 import { useChains } from "@/hooks/data/chains"
 import usePersistedState from "@/hooks/usePersistedState"
 import { useAppState } from "@/context/AppStateContext"
-import { EditStates } from "@/lib/enums"
+import { EditStates } from "@/utils/enums"
 import { RuneLines } from "@/types"
 import { useSearchState } from "@/context/SearchStateContext"
 

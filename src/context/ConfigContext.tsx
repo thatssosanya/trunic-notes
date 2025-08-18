@@ -12,10 +12,10 @@ import {
   GRID_COLS_DESKTOP_DEFAULT,
   GRID_COLS_MOBILE_DEFAULT,
   GRID_COLS_OPTION,
-} from "@/lib/consts"
+} from "@/utils/consts"
 import { useIsMobile } from "@/hooks/useMediaQuery"
-import useCallbackUntilSignal from "@/hooks/useCallbackOnce"
-import { SortingOptions } from "@/lib/enums"
+import useCallbackUntilSignal from "@/hooks/useCallbackUntilSignal"
+import { SortingOptions } from "@/utils/enums"
 
 interface ConfigContextType {
   isMenuOpen: boolean

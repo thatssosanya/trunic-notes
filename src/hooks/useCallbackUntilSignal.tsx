@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react"
 
 const useCallbackUntilSignal = (callback: () => unknown) => {
-  const [used, setUsed] = useState(false)
+  const [isSignaled, setIsSignaled] = useState(false)
   useEffect(() => {
-    if (used) {
+    if (isSignaled) {
       return
     }
     const result = callback()
     if (result) {
-      setUsed(true)
+      setIsSignaled(true)
     }
-  }, [callback, used, setUsed])
+  }, [callback, isSignaled, setIsSignaled])
 }
 
 export default useCallbackUntilSignal

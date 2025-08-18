@@ -2,7 +2,7 @@ import { Chain, ChainData } from "@/types"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 const fetchChains = async (): Promise<Chain[]> => {
-  const response = await fetch("/api/chain")
+  const response = await fetch("/api/chains")
   if (!response.ok) throw new Error("Failed to fetch chains")
   return response.json()
 }
@@ -17,14 +17,22 @@ export const useChains = () => {
 export const useSaveChain = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (data: ChainData & { id?: string }) => {
-      const method = data.id ? "PUT" : "POST"
-      const response = await fetch("/api/chain", {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
-      if (!response.ok) throw new Error("Failed to save chain")
+    mutationFn: async ({ id, ...data }: ChainData & { id?: string }) => {
+      let response: Response | null = null
+      if (id) {
+        response = await fetch("/api/chains/" + id, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        })
+      } else {
+        response = await fetch("/api/chains", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        })
+      }
+      if (!response?.ok) throw new Error("Failed to save chain")
       return response.json()
     },
     onMutate: async (newChainData: ChainData & { id?: string }) => {
@@ -68,7 +76,7 @@ export const useDeleteChain = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/chain?id=${id}`, { method: "DELETE" })
+      const response = await fetch("/api/chains/" + id, { method: "DELETE" })
       if (!response.ok) throw new Error("Failed to delete chain")
     },
     onMutate: async (idToDelete: string) => {

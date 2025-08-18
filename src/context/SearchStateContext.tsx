@@ -7,7 +7,7 @@ import React, {
   SetStateAction,
   useMemo,
 } from "react"
-import { EMPTY_RUNE_LINES } from "@/lib/consts"
+import { EMPTY_RUNE_LINES } from "@/utils/consts"
 import { RuneLines } from "@/types"
 
 interface SearchStateContextType {
@@ -66,7 +66,7 @@ export function SearchStateProvider({ children }: { children: ReactNode }) {
 export function useSearchState() {
   const context = useContext(SearchStateContext)
   if (context === undefined) {
-    throw new Error("useSearchState must be used within an AppStateProvider")
+    throw new Error("useSearchState must be used within a SearchStateProvider")
   }
   return context
 }

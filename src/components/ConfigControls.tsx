@@ -6,10 +6,10 @@ import {
   EMPTY_RUNE_LINES,
   GRID_COLS_MOBILE_OPTIONS,
   GRID_COLS_OPTIONS,
-} from "@/lib/consts"
+} from "@/utils/consts"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 import { useAppState } from "@/context/AppStateContext"
-import { EditStates, SortingOptions } from "@/lib/enums"
+import { EditStates, SortingOptions } from "@/utils/enums"
 import { useSearchState } from "@/context/SearchStateContext"
 
 const buttonBaseClass = "px-3 py-1 text-sm rounded cursor-pointer"

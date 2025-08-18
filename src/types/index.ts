@@ -1,18 +1,7 @@
-// 12 line tuple
-export type RuneLines = [
-  boolean,
-  boolean,
-  boolean,
-  boolean,
-  boolean,
-  boolean,
-  boolean,
-  boolean,
-  boolean,
-  boolean,
-  boolean,
-  boolean
-]
+// 12 lines in a rune
+export type LinesTuple<T> = [T, T, T, T, T, T, T, T, T, T, T, T]
+
+export type RuneLines = LinesTuple<boolean>
 
 export type RuneData = {
   lines: RuneLines

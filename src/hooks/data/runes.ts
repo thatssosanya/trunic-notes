@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Rune, RuneData } from "@/types"
 
 const fetchRunes = async (): Promise<Rune[]> => {
-  const response = await fetch("/api/rune")
+  const response = await fetch("/api/runes")
   if (!response.ok) throw new Error("Failed to fetch runes")
   return response.json()
 }
@@ -14,13 +14,23 @@ export const useRunes = () => {
 export const useSaveRune = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (data: RuneData & { id?: string }) => {
-      const response = await fetch("/api/rune", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
-      if (!response.ok) throw new Error("Failed to save rune")
+    mutationFn: async ({ id, ...data }: RuneData & { id?: string }) => {
+      let response: Response | null = null
+
+      if (id) {
+        response = await fetch("/api/runes/" + id, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        })
+      } else {
+        response = await fetch("/api/runes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        })
+      }
+      if (!response?.ok) throw new Error("Failed to save rune")
       return response.json()
     },
     onMutate: async (newRuneData: RuneData & { id?: string }) => {
@@ -63,7 +73,7 @@ export const useDeleteRune = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/rune?id=${id}`, { method: "DELETE" })
+      const response = await fetch("/api/runes/" + id, { method: "DELETE" })
       if (!response.ok) throw new Error("Failed to delete rune")
     },
     onMutate: async (idToDelete: string) => {
@@ -94,7 +104,7 @@ export const useUpdateRuneOrder = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (orderedIds: string[]) => {
-      const response = await fetch("/api/rune", {
+      const response = await fetch("/api/runes/ordering", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderedIds }),
