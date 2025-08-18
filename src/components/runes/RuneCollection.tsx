@@ -52,7 +52,7 @@ export default function RuneCollection({
   } = useSearchState()
   const { editingId, editState, cancelEdit, addRune, editRune } = useAppState()
 
-  const { data: runes = [], isLoading } = useRunes()
+  const { data: runes = [], isLoading, isError } = useRunes()
   const updateRuneOrderMutation = useUpdateRuneOrder()
 
   const [newFormLocation, setNewFormLocation] =
@@ -266,7 +266,11 @@ export default function RuneCollection({
       <h2 className="text-2xl text-center font-bold text-gray-300 mb-4">
         Runes
       </h2>
-      {isLoading ? (
+      {isError ? (
+        <p className="text-center mb-4 text-red-400">
+          Couldn&apos;t load runes: An error occurred
+        </p>
+      ) : isLoading ? (
         <p className="text-center mb-4">Loading runes...</p>
       ) : isAnySearchActive && !processedRunes.length ? (
         <div className="w-full text-center text-lg pt-4">

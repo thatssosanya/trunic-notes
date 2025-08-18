@@ -30,7 +30,7 @@ export default function ChainCollection({
   const { editingId, editState, cancelEdit, addChain, editChain } =
     useAppState()
 
-  const { data: chains = [], isLoading } = useChains()
+  const { data: chains = [], isLoading, isError } = useChains()
   const { data: runes = [] } = useRunes()
 
   const [showChainsSection, setShowChainsSection] = usePersistedState(
@@ -99,7 +99,11 @@ export default function ChainCollection({
 
       {showChainsSection && (
         <div className="mb-4">
-          {isLoading ? (
+          {isError ? (
+            <p className="text-center mb-4 text-red-400">
+              Couldn&apos;t load chains: An error occurred
+            </p>
+          ) : isLoading ? (
             <p className="text-center mb-4">Loading chains...</p>
           ) : isAnySearchActive &&
             !filteredChains.length &&

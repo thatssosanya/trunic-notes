@@ -1,5 +1,6 @@
 import { Chain, ChainData } from "@/types"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { toast } from "react-toastify"
 
 const fetchChains = async (): Promise<Chain[]> => {
   const response = await fetch("/api/chains")
@@ -62,6 +63,7 @@ export const useSaveChain = () => {
       return { previousChains }
     },
     onError: (err, newChain, context) => {
+      toast.error("Couldn't save chain: " + err.message)
       if (context?.previousChains) {
         queryClient.setQueryData(["chains"], context.previousChains)
       }
@@ -93,6 +95,7 @@ export const useDeleteChain = () => {
       return { previousChains }
     },
     onError: (err, id, context) => {
+      toast.error("Couldn't delete chain: " + err.message)
       if (context?.previousChains) {
         queryClient.setQueryData(["chains"], context.previousChains)
       }

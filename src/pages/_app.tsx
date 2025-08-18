@@ -3,6 +3,7 @@ import "@/styles/globals.css"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { SessionProvider } from "next-auth/react"
 import type { AppProps } from "next/app"
+import { ToastContainer } from "react-toastify"
 
 const queryClient = new QueryClient()
 
@@ -15,6 +16,7 @@ export default function App({
       <QueryClientProvider client={queryClient}>
         <AppContextProviders>
           <Component {...pageProps} />
+          <ToastContainer />
         </AppContextProviders>
       </QueryClientProvider>
     </SessionProvider>

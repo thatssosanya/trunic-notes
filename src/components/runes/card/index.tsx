@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useState } from "react"
-import { Rune, RuneData, RuneLines } from "@/types"
+import { Rune, RuneLines } from "@/types"
 import RuneEditor from "@/components/runes/RuneEditor"
 import { useConfig } from "@/context/ConfigContext"
 import { Check, Pencil, Plus, Trash2, X } from "lucide-react"
@@ -41,22 +41,16 @@ function RuneCard({
 
   const { isVerticalCards } = useConfig()
 
-  const [formData, setFormData] = useState<RuneData>({
+  const [formData, setFormData] = useState({
     ...EMPTY_RUNE_DATA,
     ...rune,
   })
+  useEffect(() => {
+    setFormData({ ...EMPTY_RUNE_DATA, ...rune })
+  }, [rune])
 
   const saveRuneMutation = useSaveRune()
   const deleteRuneMutation = useDeleteRune()
-
-  useEffect(() => {
-    if (rune) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      setFormData({ ...EMPTY_RUNE_DATA, ...rune })
-    } else {
-      setFormData(EMPTY_RUNE_DATA)
-    }
-  }, [rune])
 
   const handleEdit = () => {
     if (!rune?.id || !onEdit) {

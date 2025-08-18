@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Rune, RuneData } from "@/types"
+import { toast } from "react-toastify"
 
 const fetchRunes = async (): Promise<Rune[]> => {
   const response = await fetch("/api/runes")
@@ -59,6 +60,7 @@ export const useSaveRune = () => {
       return { previousRunes }
     },
     onError: (err, newRune, context) => {
+      toast.error("Couldn't save rune: " + err.message)
       if (context?.previousRunes) {
         queryClient.setQueryData(["runes"], context.previousRunes)
       }
@@ -90,6 +92,7 @@ export const useDeleteRune = () => {
       return { previousRunes }
     },
     onError: (err, id, context) => {
+      toast.error("Couldn't delete rune: " + err.message)
       if (context?.previousRunes) {
         queryClient.setQueryData(["runes"], context.previousRunes)
       }
@@ -126,6 +129,7 @@ export const useUpdateRuneOrder = () => {
       return { previousRunes }
     },
     onError: (err, newOrder, context) => {
+      toast.error("Couldn't reorder runes: " + err.message)
       if (context?.previousRunes) {
         queryClient.setQueryData(["runes"], context.previousRunes)
       }
