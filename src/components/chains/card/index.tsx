@@ -50,15 +50,9 @@ function ChainCard({
   const saveChainMutation = useSaveChain()
   const deleteChainMutation = useDeleteChain()
 
-  const [formData, setFormData] = useState(EMPTY_CHAIN_DATA)
+  const [formData, setFormData] = useState({ ...EMPTY_CHAIN_DATA, ...chain })
   useEffect(() => {
-    if (chain) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { id, sequence, ...editableData } = chain
-      setFormData({ ...EMPTY_CHAIN_DATA, ...editableData })
-    } else {
-      setFormData(EMPTY_CHAIN_DATA)
-    }
+    setFormData({ ...EMPTY_CHAIN_DATA, ...chain })
   }, [chain])
 
   const runesWithTranslations = useMemo(

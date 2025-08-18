@@ -7,6 +7,8 @@ import { useAppState } from "@/context/AppStateContext"
 import { EditStates } from "@/utils/enums"
 import { RuneLines } from "@/types"
 import { useSearchState } from "@/context/SearchStateContext"
+import { useRunes } from "@/hooks/data/runes"
+import { isExactLineMatch } from "@/utils/runes"
 
 type ChainCollectionProps = {
   onCopyRune: (lines: RuneLines) => void
@@ -29,6 +31,7 @@ export default function ChainCollection({
     useAppState()
 
   const { data: chains = [], isLoading } = useChains()
+  const { data: runes = [] } = useRunes()
 
   const [showChainsSection, setShowChainsSection] = usePersistedState(
     "trunic-show-chains-section",
@@ -51,8 +54,14 @@ export default function ChainCollection({
       const textMatch =
         !isTextSearchActive ||
         chain.translation.toLowerCase().includes(searchQuery) ||
-        chain.note.toLowerCase().includes(searchQuery)
-      // TODO add text search on rune translations (currently added in ChainCard)
+        chain.note.toLowerCase().includes(searchQuery) ||
+        chain.runes
+          .map((lines) =>
+            runes.find((rune) => isExactLineMatch(rune.lines, lines))
+          )
+          .filter((v) => v)
+          .some((rune) => rune?.translation.toLowerCase().includes(searchQuery))
+
       const visualMatch =
         !isRuneSearchActive ||
         chain.runes.some((rune) =>
@@ -63,6 +72,7 @@ export default function ChainCollection({
     return baseFiltered
   }, [
     chains,
+    runes,
     isTextSearchActive,
     searchQuery,
     isRuneSearchActive,
