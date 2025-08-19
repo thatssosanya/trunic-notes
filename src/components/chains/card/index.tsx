@@ -11,8 +11,9 @@ import { useConfig } from "@/context/ConfigContext"
 import useTapOrHover from "@/hooks/useTapOrHover"
 import { useDeleteChain, useSaveChain } from "@/hooks/data/chains"
 import { useRunes } from "@/hooks/data/runes"
-import { GRID_COLS_CLASSES } from "@/styles"
+import { ButtonColor, cn, GRID_COLS_CLASSES } from "@/styles"
 import { isExactLineMatch } from "@/utils/runes"
+import IconButton from "@/components/common/IconButton"
 
 interface ChainCardProps {
   chain?: Partial<Chain>
@@ -155,9 +156,10 @@ function ChainCard({
     <div
       ref={elementRef}
       {...handlers}
-      className={`relative group bg-gray-800 p-4 rounded-lg border-2 ${
+      className={cn(
+        "relative group bg-gray-800 p-4 rounded-lg border-2",
         isEditing ? "border-cyan-500" : "border-gray-700"
-      }`}
+      )}
     >
       {isEditing ? (
         <input
@@ -178,10 +180,10 @@ function ChainCard({
       )}
 
       <div
-        className={
-          "grid p-4 pt-6 rounded-md " +
-          (GRID_COLS_CLASSES[effectiveGridCols] || "grid-cols-8")
-        }
+        className={cn(
+          "grid p-4 pt-6 rounded-md ",
+          GRID_COLS_CLASSES[effectiveGridCols] || "grid-cols-8"
+        )}
       >
         {runesWithTranslations.map((rune, index, arr) => (
           <div key={index} className="relative grid grid-cols-1">
@@ -200,26 +202,28 @@ function ChainCard({
             {!isEditing &&
               !isOtherFormActive &&
               (rune.id && onScrollToRune ? (
-                <button
+                <IconButton
+                  Icon={Pencil}
+                  color={ButtonColor.CYAN}
                   onClick={() => onScrollToRune(rune.id)}
                   title="Edit Rune"
-                  className="absolute top-0 -translate-y-full left-[53%] -translate-x-1/2 p-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded cursor-pointer"
-                >
-                  <Pencil size={20} />
-                </button>
+                  className="absolute top-0 -translate-y-full left-[53%] -translate-x-1/2"
+                />
               ) : (
                 onCopyRune && (
-                  <button
+                  <IconButton
+                    Icon={FilePlus}
+                    color={ButtonColor.GRAY}
                     onClick={() => onCopyRune(rune.lines)}
                     title="Copy to New Rune"
-                    className="absolute top-0 -translate-y-full left-[53%] -translate-x-1/2 p-1 bg-gray-600 text-white rounded cursor-pointer"
-                  >
-                    <FilePlus size={20} />
-                  </button>
+                    className="absolute top-0 -translate-y-full left-[53%] -translate-x-1/2"
+                  />
                 )
               ))}
             {isEditing && arr.length > 1 && (
-              <button
+              <IconButton
+                Icon={X}
+                color={ButtonColor.RED}
                 onClick={() =>
                   setFormData((prev) => ({
                     ...prev,
@@ -230,10 +234,7 @@ function ChainCard({
                   }))
                 }
                 title="Delete from Chain"
-                className="absolute top-0 -translate-y-full left-[53%] -translate-x-1/2 p-1 bg-red-600 text-white rounded cursor-pointer"
-              >
-                <X size={20} />
-              </button>
+              />
             )}
             <h2 className="col-span-2 text-lg font-bold text-white text-center h-8 flex items-center justify-center break-all truncate">
               {rune.translation}
@@ -275,43 +276,41 @@ function ChainCard({
 
       {isEditing && (
         <div className="flex flex-col h-full justify-end gap-2 absolute bottom-4 right-4">
-          <button
+          <IconButton
+            Icon={X}
+            color={ButtonColor.RED}
             onClick={onCancel}
-            className="p-2 bg-red-600 rounded cursor-pointer"
-          >
-            <X size={20} />
-          </button>
-          <button
+            title="Cancel"
+          />
+          <IconButton
+            Icon={Check}
+            color={ButtonColor.CYAN}
             onClick={handleSave}
-            className="p-2 bg-cyan-600 hover:bg-cyan-500 rounded cursor-pointer"
-          >
-            <Check size={20} />
-          </button>
+            title="Save"
+          />
         </div>
       )}
 
       {!isEditing && !isOtherFormActive && chain?.id && (
         <div
-          className={
-            "absolute flex gap-2 right-4 " +
-            hiddenButtonClasses +
-            (isVerticalCards ? " flex-col-reverse bottom-4" : " top-4")
-          }
+          className={cn(
+            "absolute flex gap-2 right-4",
+            hiddenButtonClasses,
+            isVerticalCards ? "flex-col-reverse bottom-4" : "top-4"
+          )}
         >
-          <button
+          <IconButton
+            Icon={Pencil}
+            color={ButtonColor.CYAN}
             onClick={handleEdit}
-            className={
-              "p-2 bg-cyan-600 hover:bg-cyan-500 rounded cursor-pointer"
-            }
-          >
-            <Pencil size={20} />
-          </button>
-          <button
+            title="Edit"
+          />
+          <IconButton
+            Icon={Trash2}
+            color={ButtonColor.RED}
             onClick={handleDelete}
-            className={"p-2 bg-red-600 hover:bg-red-500 rounded cursor-pointer"}
-          >
-            <Trash2 size={20} />
-          </button>
+            title="Delete"
+          />
         </div>
       )}
     </div>

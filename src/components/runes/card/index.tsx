@@ -6,6 +6,8 @@ import { Check, Pencil, Plus, Trash2, X } from "lucide-react"
 import { EMPTY_RUNE_DATA, EMPTY_RUNE_LINES } from "@/utils/consts"
 import useTapOrHover from "@/hooks/useTapOrHover"
 import { useDeleteRune, useSaveRune } from "@/hooks/data/runes"
+import IconButton from "@/components/common/IconButton"
+import { ButtonColor, cn } from "@/styles"
 
 interface RuneCardProps {
   rune?: Partial<Rune>
@@ -17,11 +19,6 @@ interface RuneCardProps {
   shouldScroll?: boolean
   onScrollComplete?: () => void
 }
-
-const buttonBaseClass =
-  "h-8 w-8 flex items-center justify-center rounded cursor-pointer"
-const cyanButtonClass = `${buttonBaseClass} bg-cyan-600 hover:bg-cyan-500`
-const redButtonClass = `${buttonBaseClass} bg-red-600 hover:bg-red-500`
 
 function RuneCard({
   rune,
@@ -167,9 +164,10 @@ function RuneCard({
       <div
         ref={elementRef}
         {...handlers}
-        className={`bg-gray-800 p-3 rounded-lg border-2 h-full relative group flex flex-col items-center gap-2 ${
+        className={cn(
+          "bg-gray-800 p-3 rounded-lg border-2 h-full relative group flex flex-col items-center gap-2",
           isEditing ? "border-cyan-500" : "border-gray-700"
-        }`}
+        )}
       >
         <div className="w-full mb-1">
           <RuneEditor
@@ -210,14 +208,13 @@ function RuneCard({
                   <span className="text-xl font-bold">?</span>
                 </label>
               </div>
-              <button
+              <IconButton
+                Icon={X}
+                color={ButtonColor.RED}
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={onCancel}
                 title="Cancel"
-                className={redButtonClass}
-              >
-                <X size={20} />
-              </button>
+              />
 
               <input
                 name="note"
@@ -226,14 +223,13 @@ function RuneCard({
                 onChange={handleFieldChange}
                 className="bg-gray-900 text-white p-1 rounded w-full text-sm h-8"
               />
-              <button
+              <IconButton
+                Icon={Check}
+                color={ButtonColor.CYAN}
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={handleSave}
                 title="Save"
-                className={cyanButtonClass}
-              >
-                <Check size={20} />
-              </button>
+              />
             </>
           ) : (
             <>
@@ -253,38 +249,36 @@ function RuneCard({
               )}
 
               {onAddRuneForChain && rune?.lines ? (
-                <button
-                  onClick={() => rune.lines && onAddRuneForChain(rune.lines)}
+                <IconButton
+                  Icon={Plus}
+                  color={ButtonColor.CYAN}
                   onPointerDown={(e) => e.stopPropagation()}
+                  onClick={() => rune.lines && onAddRuneForChain(rune.lines)}
                   title="Add this rune to the chain being edited"
-                  className="absolute top-2 left-2 p-1 bg-green-600 hover:bg-green-500 text-white rounded cursor-pointer"
-                >
-                  <Plus size={20} />
-                </button>
+                  className="absolute top-2 left-2 p-1"
+                />
               ) : (
                 !isOtherFormActive && (
                   <div
-                    className={
-                      "absolute bottom-3 right-3 flex flex-col gap-2" +
+                    className={cn(
+                      "absolute bottom-3 right-3 flex flex-col gap-2",
                       hiddenButtonClasses
-                    }
+                    )}
                   >
-                    <button
+                    <IconButton
+                      Icon={Trash2}
+                      color={ButtonColor.RED}
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={handleDelete}
                       title="Delete"
-                      className={redButtonClass}
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                    <button
+                    />
+                    <IconButton
+                      Icon={Pencil}
+                      color={ButtonColor.CYAN}
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={handleEdit}
                       title="Edit"
-                      className={cyanButtonClass}
-                    >
-                      <Pencil size={18} />
-                    </button>
+                    />
                   </div>
                 )
               )}
@@ -302,9 +296,10 @@ function RuneCard({
     <div
       ref={elementRef}
       {...handlers}
-      className={`bg-gray-800 p-4 rounded-lg border-2 h-full relative group grid grid-cols-2 gap-4 ${
+      className={cn(
+        "bg-gray-800 p-4 rounded-lg border-2 h-full relative group grid grid-cols-2 gap-4",
         isEditing ? "border-cyan-500" : "border-gray-700"
-      }`}
+      )}
     >
       <div>
         <RuneEditor
@@ -371,43 +366,39 @@ function RuneCard({
         )}
         {isEditing && (
           <div className="grid grid-cols-2 gap-2 mt-auto">
-            <button
+            <IconButton
+              Icon={X}
+              color={ButtonColor.RED}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={onCancel}
               title="Cancel"
-              className={redButtonClass}
-            >
-              <X size={20} />
-            </button>
-            <button
+            />
+            <IconButton
+              Icon={Check}
+              color={ButtonColor.CYAN}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={handleSave}
               title="Save"
-              className={cyanButtonClass}
-            >
-              <Check size={20} />
-            </button>
+            />
           </div>
         )}
       </div>
       {!isEditing && (
         <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
+          <IconButton
+            Icon={Pencil}
+            color={ButtonColor.CYAN}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={handleEdit}
             title="Edit"
-            className={cyanButtonClass}
-          >
-            <Pencil size={20} />
-          </button>
-          <button
+          />
+          <IconButton
+            Icon={Trash2}
+            color={ButtonColor.RED}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={handleDelete}
             title="Delete"
-            className={redButtonClass}
-          >
-            <Trash2 size={20} />
-          </button>
+          />
         </div>
       )}
     </div>

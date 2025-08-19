@@ -11,6 +11,8 @@ import { useIsMobile } from "@/hooks/useMediaQuery"
 import { useAppState } from "@/context/AppStateContext"
 import { EditStates, SortingOptions } from "@/utils/enums"
 import { useSearchState } from "@/context/SearchStateContext"
+import IconButton from "./common/IconButton"
+import { ButtonColor, cn } from "@/styles"
 
 const buttonBaseClass = "px-3 py-1 text-sm rounded cursor-pointer"
 const buttonActiveClass = "bg-cyan-600 text-white"
@@ -65,9 +67,10 @@ export default function ConfigControls() {
     <div className="bg-gray-800 p-4 rounded-lg mb-8 grid grid-cols-1 md:grid-cols-3 gap-6 lg:max-w-lg 2xl:max-w-2xl lg:mx-auto relative">
       <div className="relative">
         <Search
-          className={`absolute top-1 left-1 ${
+          className={cn(
+            "absolute top-1 left-1",
             isRuneSearchActive ? "text-cyan-300" : "text-gray-500"
-          }`}
+          )}
           size={20}
         />
         <div className="w-full max-w-[10rem] mx-auto">
@@ -90,9 +93,10 @@ export default function ConfigControls() {
       <div className="md:col-span-2 flex flex-col justify-between gap-4">
         <div className="relative flex items-center">
           <Search
-            className={`absolute left-3 ${
+            className={cn(
+              "absolute left-3",
               isTextSearchActive ? "text-cyan-300" : "text-gray-500"
-            }`}
+            )}
           />
           <input
             type="text"
@@ -120,9 +124,10 @@ export default function ConfigControls() {
                 <button
                   key={num}
                   onClick={() => setGridCols(num)}
-                  className={`w-5 h-5 text-xs rounded cursor-pointer ${
+                  className={cn(
+                    "w-5 h-5 text-xs rounded cursor-pointer",
                     gridCols === num ? buttonActiveClass : buttonInactiveClass
-                  }`}
+                  )}
                 >
                   {num}
                 </button>
@@ -136,17 +141,19 @@ export default function ConfigControls() {
           <div className="flex gap-2">
             <button
               onClick={() => setIsVerticalCards(true)}
-              className={`${buttonBaseClass} ${
+              className={cn(
+                buttonBaseClass,
                 isVerticalCards ? buttonActiveClass : buttonInactiveClass
-              }`}
+              )}
             >
               Vertical
             </button>
             <button
               onClick={() => setIsVerticalCards(false)}
-              className={`${buttonBaseClass} ${
+              className={cn(
+                buttonBaseClass,
                 !isVerticalCards ? buttonActiveClass : buttonInactiveClass
-              }`}
+              )}
             >
               Horizontal
             </button>
@@ -158,17 +165,19 @@ export default function ConfigControls() {
           <div className="flex gap-2">
             <button
               onClick={() => setShowInactiveLines(false)}
-              className={`${buttonBaseClass} ${
+              className={cn(
+                buttonBaseClass,
                 !showInactiveLines ? buttonActiveClass : buttonInactiveClass
-              }`}
+              )}
             >
               Active
             </button>
             <button
               onClick={() => setShowInactiveLines(true)}
-              className={`${buttonBaseClass} ${
+              className={cn(
+                buttonBaseClass,
                 showInactiveLines ? buttonActiveClass : buttonInactiveClass
-              }`}
+              )}
             >
               All
             </button>
@@ -180,21 +189,23 @@ export default function ConfigControls() {
           <div className="flex gap-2">
             <button
               onClick={() => setSortBy(SortingOptions.ALPHA)}
-              className={`${buttonBaseClass} ${
+              className={cn(
+                buttonBaseClass,
                 sortBy === SortingOptions.ALPHA
                   ? buttonActiveClass
                   : buttonInactiveClass
-              }`}
+              )}
             >
               Alpha
             </button>
             <button
               onClick={() => setSortBy(SortingOptions.SEQUENCE)}
-              className={`${buttonBaseClass} ${
+              className={cn(
+                buttonBaseClass,
                 sortBy === SortingOptions.SEQUENCE
                   ? buttonActiveClass
                   : buttonInactiveClass
-              }`}
+              )}
             >
               Custom
             </button>
@@ -202,13 +213,13 @@ export default function ConfigControls() {
         </div>
 
         {editState === EditStates.IDLE && (
-          <button
+          <IconButton
+            Icon={PlusSquare}
+            color={ButtonColor.GRAY}
             onClick={addRune}
             title="Add New Rune to Top"
-            className="absolute bottom-4 right-4 w-10 h-10 flex items-center justify-center bg-gray-700 hover:bg-cyan-600 text-white rounded-lg cursor-pointer"
-          >
-            <PlusSquare size={24} />
-          </button>
+            className="absolute bottom-4 right-4"
+          />
         )}
       </div>
     </div>

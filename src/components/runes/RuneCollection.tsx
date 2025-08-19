@@ -26,7 +26,7 @@ import { Rune, RuneLines } from "@/types"
 import { useAppState } from "@/context/AppStateContext"
 import { EditStates, RuneNewFormLocations, SortingOptions } from "@/utils/enums"
 import { isExactLineMatch } from "@/utils/runes"
-import { GRID_COLS_CLASSES } from "@/styles"
+import { cn, GRID_COLS_CLASSES } from "@/styles"
 import { useSearchState } from "@/context/SearchStateContext"
 
 type RuneCollectionProps = {
@@ -218,7 +218,7 @@ export default function RuneCollection({
 
   const runeGrid = (
     <div
-      className={`grid ${GRID_COLS_CLASSES[gridCols] || "grid-cols-8"} gap-4`}
+      className={cn("grid gap-4", GRID_COLS_CLASSES[gridCols] || "grid-cols-8")}
     >
       {editState === EditStates.ADDING_RUNE &&
         newFormLocation === RuneNewFormLocations.START &&

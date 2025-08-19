@@ -10,6 +10,7 @@ import { RuneLines } from "@/types"
 import { useAppState } from "@/context/AppStateContext"
 import { EditStates } from "@/utils/enums"
 import Head from "next/head"
+import { cn } from "@/styles"
 
 function Notes() {
   const { isMenuOpen, setIsMenuOpen } = useConfig()
@@ -53,9 +54,10 @@ function Notes() {
             Trunic Notes
           </h1>
           <ChevronDown
-            className={`text-cyan-400 transition-transform ${
-              isMenuOpen ? "rotate-180" : ""
-            }`}
+            className={cn(
+              "text-cyan-400 transition-transform rotate-0",
+              isMenuOpen && "rotate-180"
+            )}
           />
         </button>
       </div>

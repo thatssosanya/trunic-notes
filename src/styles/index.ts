@@ -1,3 +1,7 @@
+import type { ClassValue } from "clsx"
+import { clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+
 export const GRID_COLS_MOBILE_CLASSES = {
   "1": "grid-cols-1",
   "2": "grid-cols-2",
@@ -13,3 +17,13 @@ export const GRID_COLS_CLASSES = {
   "16": "grid-cols-16",
   "20": "grid-cols-20",
 } as const
+
+export enum ButtonColor {
+  RED,
+  CYAN,
+  GRAY,
+}
+
+export const cn = (...inputs: ClassValue[]) => {
+  return twMerge(clsx(inputs))
+}
