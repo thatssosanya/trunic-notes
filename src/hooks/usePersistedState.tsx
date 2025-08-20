@@ -4,6 +4,7 @@ export default function usePersistedState<T>(
   key: string,
   defaultValue: T
 ): [T, Dispatch<SetStateAction<T>>] {
+  // not initialized with localstorage value to avoid hydration mismatch
   const [state, setState] = useState<T>(defaultValue)
 
   useEffect(() => {

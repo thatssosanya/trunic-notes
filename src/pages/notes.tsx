@@ -8,7 +8,7 @@ import RuneCollection from "@/components/runes/RuneCollection"
 import { useCallback, useEffect, useState } from "react"
 import { RuneLines } from "@/types"
 import { useAppState } from "@/context/AppStateContext"
-import { EditStates } from "@/utils/enums"
+import { EditState } from "@/utils/enums"
 import Head from "next/head"
 import { cn } from "@/styles"
 
@@ -25,7 +25,7 @@ function Notes() {
     [addRune]
   )
   useEffect(() => {
-    if (editState === EditStates.IDLE) {
+    if (editState === EditState.IDLE) {
       setCopiedRune(null)
     }
   }, [editState])
@@ -41,7 +41,7 @@ function Notes() {
   const onScrollComplete = useCallback(() => setRuneIdToScroll(null), [])
 
   return (
-    <main className="min-h-screen flex flex-col p-8 bg-gray-900 text-white">
+    <main className="min-h-screen flex flex-col p-8 bg-primary text-primary">
       <Head>
         <title>Trunic Notes</title>
       </Head>
@@ -50,12 +50,12 @@ function Notes() {
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           className="inline-flex items-center gap-3 group cursor-pointer"
         >
-          <h1 className="text-4xl font-bold text-cyan-300 group-hover:text-cyan-200 transition-colors">
+          <h1 className="text-4xl font-bold text-accent group-hover:text-accent-highlight transition">
             Trunic Notes
           </h1>
           <ChevronDown
             className={cn(
-              "text-cyan-400 transition-transform rotate-0",
+              "text-accent group-hover:text-accent-highlight transition rotate-0",
               isMenuOpen && "rotate-180"
             )}
           />
@@ -79,7 +79,7 @@ function Notes() {
 
       <div className="mt-auto w-full flex justify-center pt-4">
         <button
-          className="text-xs text-gray-300 underline cursor-pointer hover:no-underline"
+          className="text-xs text-secondary underline cursor-pointer hover:no-underline"
           onClick={() => signOut()}
         >
           Log out

@@ -24,7 +24,7 @@ import {
 import { useRunes, useUpdateRuneOrder } from "@/hooks/data/runes"
 import { Rune, RuneLines } from "@/types"
 import { useAppState } from "@/context/AppStateContext"
-import { EditStates, RuneNewFormLocations, SortingOptions } from "@/utils/enums"
+import { EditState, RuneNewFormLocation, SortingOption } from "@/utils/enums"
 import { isExactLineMatch } from "@/utils/runes"
 import { cn, GRID_COLS_CLASSES } from "@/styles"
 import { useSearchState } from "@/context/SearchStateContext"
@@ -56,13 +56,13 @@ export default function RuneCollection({
   const updateRuneOrderMutation = useUpdateRuneOrder()
 
   const [newFormLocation, setNewFormLocation] =
-    useState<RuneNewFormLocations | null>(null)
+    useState<RuneNewFormLocation | null>(null)
   const [isNewFormEditing, setIsNewFormEditing] = useState(false)
   useEffect(() => {
-    if (editState === EditStates.ADDING_RUNE && !newFormLocation) {
-      setNewFormLocation(RuneNewFormLocations.START)
+    if (editState === EditState.ADDING_RUNE && !newFormLocation) {
+      setNewFormLocation(RuneNewFormLocation.START)
       setIsNewFormEditing(false)
-    } else if (editState !== EditStates.ADDING_RUNE) {
+    } else if (editState !== EditState.ADDING_RUNE) {
       // handle adding cancelation
       setNewFormLocation(null)
       setIsNewFormEditing(false)
@@ -95,7 +95,7 @@ export default function RuneCollection({
     })
 
     if (!isTextSearchActive && !isRuneSearchActive) {
-      if (sortBy === SortingOptions.ALPHA) {
+      if (sortBy === SortingOption.ALPHA) {
         return baseFiltered.toSorted((a, b) =>
           a.translation.localeCompare(b.translation)
         )
@@ -142,7 +142,7 @@ export default function RuneCollection({
     })
 
     const sortedRemaining =
-      sortBy === SortingOptions.ALPHA
+      sortBy === SortingOption.ALPHA
         ? priorityBuckets.remaining.toSorted((a, b) =>
             a.translation.localeCompare(b.translation)
           )
@@ -178,27 +178,27 @@ export default function RuneCollection({
   }
 
   const handleAdd = () => {
-    setNewFormLocation(RuneNewFormLocations.END)
+    setNewFormLocation(RuneNewFormLocation.END)
     addRune()
   }
 
   const isAnySearchActive = isTextSearchActive || isRuneSearchActive
   const isDndDisabled =
-    sortBy === SortingOptions.ALPHA ||
+    sortBy === SortingOption.ALPHA ||
     isAnySearchActive ||
-    editState !== EditStates.IDLE
+    editState !== EditState.IDLE
 
   const AddNewButton = (
     <button
       onClick={handleAdd}
-      className="flex items-center justify-center w-full h-full min-h-24 border-4 border-dashed border-gray-700 hover:border-cyan-500 rounded-lg transition-colors text-gray-500 hover:text-cyan-400 cursor-pointer"
+      className="flex items-center justify-center w-full h-full min-h-24 border-4 border-dashed border-primary hover:border-accent rounded-lg transition-colors text-muted hover:text-accent cursor-pointer"
     >
       <span className="text-6xl font-thin">+</span>
     </button>
   )
 
   const NewRuneForm =
-    newFormLocation === RuneNewFormLocations.END || isNewFormEditing ? (
+    newFormLocation === RuneNewFormLocation.END || isNewFormEditing ? (
       <RuneCard
         key="newRuneForm"
         rune={newRuneTemplate}
@@ -220,12 +220,12 @@ export default function RuneCollection({
     <div
       className={cn("grid gap-4", GRID_COLS_CLASSES[gridCols] || "grid-cols-8")}
     >
-      {editState === EditStates.ADDING_RUNE &&
-        newFormLocation === RuneNewFormLocations.START &&
+      {editState === EditState.ADDING_RUNE &&
+        newFormLocation === RuneNewFormLocation.START &&
         NewRuneForm}
       {processedRunes.map((rune) => {
         const isEditingThis =
-          editState === EditStates.EDITING_RUNE && editingId === rune.id
+          editState === EditState.EDITING_RUNE && editingId === rune.id
         return (
           <SortableRuneCard
             key={rune.id}
@@ -233,10 +233,10 @@ export default function RuneCollection({
             isEditing={isEditingThis}
             onEdit={editRune}
             onCancel={cancelEdit}
-            isOtherFormActive={editState !== EditStates.IDLE && !isEditingThis}
+            isOtherFormActive={editState !== EditState.IDLE && !isEditingThis}
             onAddRuneForChain={
-              editState === EditStates.ADDING_CHAIN ||
-              editState === EditStates.EDITING_CHAIN
+              editState === EditState.ADDING_CHAIN ||
+              editState === EditState.EDITING_CHAIN
                 ? onAddRuneForChain
                 : undefined
             }
@@ -246,10 +246,10 @@ export default function RuneCollection({
           />
         )
       })}
-      {editState === EditStates.ADDING_RUNE &&
-      newFormLocation === RuneNewFormLocations.END
+      {editState === EditState.ADDING_RUNE &&
+      newFormLocation === RuneNewFormLocation.END
         ? NewRuneForm
-        : !isAnySearchActive && editState === EditStates.IDLE
+        : !isAnySearchActive && editState === EditState.IDLE
         ? AddNewButton
         : null}
     </div>
@@ -257,17 +257,11 @@ export default function RuneCollection({
 
   return (
     <div className="relative">
-      {/* TODO
-      {isRefetching && (
-        <div className="absolute inset-0 bg-gray-900/75 z-10 flex justify-center items-center">
-          <Loader2 className="h-8 w-8 text-cyan-300 animate-spin" />
-        </div>
-      )} */}
-      <h2 className="text-2xl text-center font-bold text-gray-300 mb-4">
+      <h2 className="text-2xl text-center font-bold text-secondary mb-4">
         Runes
       </h2>
       {isError ? (
-        <p className="text-center mb-4 text-red-400">
+        <p className="text-center mb-4 text-danger">
           Couldn&apos;t load runes: An error occurred
         </p>
       ) : isLoading ? (

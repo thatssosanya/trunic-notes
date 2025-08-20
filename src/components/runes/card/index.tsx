@@ -1,7 +1,6 @@
 import { memo, useCallback, useEffect, useState } from "react"
 import { Rune, RuneLines } from "@/types"
 import RuneEditor from "@/components/runes/RuneEditor"
-import { useConfig } from "@/context/ConfigContext"
 import { Check, Pencil, Plus, Trash2, X } from "lucide-react"
 import { EMPTY_RUNE_DATA, EMPTY_RUNE_LINES } from "@/utils/consts"
 import useTapOrHover from "@/hooks/useTapOrHover"
@@ -35,8 +34,6 @@ function RuneCard({
     handlers,
     buttonClasses: hiddenButtonClasses,
   } = useTapOrHover({ isDisabled: isEditing })
-
-  const { isVerticalCards } = useConfig()
 
   const [formData, setFormData] = useState({
     ...EMPTY_RUNE_DATA,
@@ -156,152 +153,16 @@ function RuneCard({
     }
   }, [isEditing, handleSave, onCancel])
 
-  // ===================================================================
-  // VERTICAL CARD RENDER
-  // ===================================================================
-  if (isVerticalCards) {
-    return (
-      <div
-        ref={elementRef}
-        {...handlers}
-        className={cn(
-          "bg-gray-800 p-3 rounded-lg border-2 h-full relative group flex flex-col items-center gap-2",
-          isEditing ? "border-cyan-500" : "border-gray-700"
-        )}
-      >
-        <div className="w-full mb-1">
-          <RuneEditor
-            isEditing={isEditing}
-            runeState={
-              isEditing ? formData.lines : rune?.lines || EMPTY_RUNE_LINES
-            }
-            setRuneState={handleRuneChange}
-          />
-        </div>
-
-        <div className="w-full grid grid-cols-[1fr_auto] gap-2">
-          {isEditing ? (
-            <>
-              <div className="flex items-center gap-2 w-full h-8">
-                <input
-                  type="text"
-                  name="translation"
-                  placeholder="Translation"
-                  value={formData.translation}
-                  onChange={handleFieldChange}
-                  className="bg-gray-900 text-white p-1 rounded w-full h-full text-center text-lg font-bold"
-                  autoFocus
-                />
-                <label
-                  htmlFor={`isNotConfident-${rune?.id || "new"}`}
-                  className="flex items-center gap-1 cursor-pointer text-amber-400"
-                  title="Mark as uncertain"
-                >
-                  <input
-                    type="checkbox"
-                    id={`isNotConfident-${rune?.id || "new"}`}
-                    name="isNotConfident"
-                    checked={!formData.isConfident}
-                    onChange={handleFieldChange}
-                    className="w-5 h-5 accent-amber-400 cursor-pointer"
-                  />
-                  <span className="text-xl font-bold">?</span>
-                </label>
-              </div>
-              <IconButton
-                Icon={X}
-                color={ButtonColor.RED}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={onCancel}
-                title="Cancel"
-              />
-
-              <input
-                name="note"
-                placeholder="Note..."
-                value={formData.note}
-                onChange={handleFieldChange}
-                className="bg-gray-900 text-white p-1 rounded w-full text-sm h-8"
-              />
-              <IconButton
-                Icon={Check}
-                color={ButtonColor.CYAN}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={handleSave}
-                title="Save"
-              />
-            </>
-          ) : (
-            <>
-              <h2 className="col-span-2 text-lg font-bold text-white text-center h-8 flex items-center justify-center break-all truncate">
-                {rune?.translation || (
-                  <span className="text-gray-500">No translation</span>
-                )}
-                {!rune?.isConfident && (
-                  <span className="text-amber-400 ml-2">?</span>
-                )}
-              </h2>
-
-              {rune?.note && (
-                <div className="col-span-2 text-gray-400 text-sm w-full text-center h-8 flex items-center justify-center break-all truncate">
-                  {rune.note}
-                </div>
-              )}
-
-              {onAddRuneForChain && rune?.lines ? (
-                <IconButton
-                  Icon={Plus}
-                  color={ButtonColor.CYAN}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={() => rune.lines && onAddRuneForChain(rune.lines)}
-                  title="Add this rune to the chain being edited"
-                  className="absolute top-2 left-2 p-1"
-                />
-              ) : (
-                !isOtherFormActive && (
-                  <div
-                    className={cn(
-                      "absolute bottom-3 right-3 flex flex-col gap-2",
-                      hiddenButtonClasses
-                    )}
-                  >
-                    <IconButton
-                      Icon={Trash2}
-                      color={ButtonColor.RED}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={handleDelete}
-                      title="Delete"
-                    />
-                    <IconButton
-                      Icon={Pencil}
-                      color={ButtonColor.CYAN}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={handleEdit}
-                      title="Edit"
-                    />
-                  </div>
-                )
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  // ===================================================================
-  // HORIZONTAL CARD RENDER
-  // ===================================================================
   return (
     <div
       ref={elementRef}
       {...handlers}
       className={cn(
-        "bg-gray-800 p-4 rounded-lg border-2 h-full relative group grid grid-cols-2 gap-4",
-        isEditing ? "border-cyan-500" : "border-gray-700"
+        "bg-card p-3 rounded-lg border-2 h-full relative group flex flex-col items-center gap-2",
+        isEditing ? "border-accent" : "border-primary"
       )}
     >
-      <div>
+      <div className="w-full mb-1">
         <RuneEditor
           isEditing={isEditing}
           runeState={
@@ -310,68 +171,50 @@ function RuneCard({
           setRuneState={handleRuneChange}
         />
       </div>
-      <div className="flex flex-col gap-3">
+
+      <div className="w-full grid grid-cols-[1fr_auto] gap-2">
         {isEditing ? (
-          <input
-            type="text"
-            name="translation"
-            placeholder="Translation"
-            value={formData.translation}
-            onChange={handleFieldChange}
-            className="bg-gray-900 text-white p-2 rounded w-full text-xl font-bold"
-            autoFocus
-          />
-        ) : (
-          <h2 className="text-xl font-bold text-white truncate h-[3rem] flex items-center">
-            {rune?.translation || (
-              <span className="text-gray-500">No Translation</span>
-            )}
-            {!rune?.isConfident && (
-              <span className="text-amber-400 ml-2">?</span>
-            )}
-          </h2>
-        )}
-        {isEditing && (
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id={`isConfident-${rune?.id || "new"}`}
-              name="isConfident"
-              checked={formData.isConfident}
-              onChange={handleFieldChange}
-              className="w-4 h-4 accent-cyan-500"
-            />
-            <label
-              htmlFor={`isConfident-${rune?.id || "new"}`}
-              className="text-gray-300"
-            >
-              Confident Translation
-            </label>
-          </div>
-        )}
-        {isEditing ? (
-          <textarea
-            name="note"
-            placeholder="Notes..."
-            value={formData.note}
-            onChange={handleFieldChange}
-            className="bg-gray-900 text-white p-2 rounded w-full flex-grow text-sm"
-          />
-        ) : (
-          rune?.note && (
-            <p className="text-gray-400 mt-1 flex-grow overflow-auto text-sm whitespace-pre-wrap">
-              {rune.note}
-            </p>
-          )
-        )}
-        {isEditing && (
-          <div className="grid grid-cols-2 gap-2 mt-auto">
+          <>
+            <div className="flex items-center gap-2 w-full h-8">
+              <input
+                type="text"
+                name="translation"
+                placeholder="Translation"
+                value={formData.translation}
+                onChange={handleFieldChange}
+                className="bg-input p-1 rounded w-full h-full text-center text-lg font-bold"
+                autoFocus
+              />
+              <label
+                htmlFor={`isNotConfident-${rune?.id || "new"}`}
+                className="flex items-center gap-1 cursor-pointer text-accent-secondary"
+                title="Mark as uncertain"
+              >
+                <input
+                  type="checkbox"
+                  id={`isNotConfident-${rune?.id || "new"}`}
+                  name="isNotConfident"
+                  checked={!formData.isConfident}
+                  onChange={handleFieldChange}
+                  className="w-5 h-5 accent-accent-secondary cursor-pointer"
+                />
+                <span className="text-xl font-bold">?</span>
+              </label>
+            </div>
             <IconButton
               Icon={X}
               color={ButtonColor.RED}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={onCancel}
               title="Cancel"
+            />
+
+            <input
+              name="note"
+              placeholder="Note..."
+              value={formData.note}
+              onChange={handleFieldChange}
+              className="bg-input p-1 rounded w-full text-sm h-8"
             />
             <IconButton
               Icon={Check}
@@ -380,27 +223,61 @@ function RuneCard({
               onClick={handleSave}
               title="Save"
             />
-          </div>
+          </>
+        ) : (
+          <>
+            <h2 className="col-span-2 text-lg font-bold text-center h-8 flex items-center justify-center break-all truncate">
+              {rune?.translation || (
+                <span className="text-muted">No translation</span>
+              )}
+              {!rune?.isConfident && (
+                <span className="text-accent-secondary ml-2">?</span>
+              )}
+            </h2>
+
+            {rune?.note && (
+              <div className="col-span-2 text-secondary text-sm w-full text-center h-8 flex items-center justify-center break-all truncate">
+                {rune.note}
+              </div>
+            )}
+
+            {onAddRuneForChain && rune?.lines ? (
+              <IconButton
+                Icon={Plus}
+                color={ButtonColor.CYAN}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => rune.lines && onAddRuneForChain(rune.lines)}
+                title="Add this rune to the chain being edited"
+                className="absolute top-2 left-2 p-1"
+              />
+            ) : (
+              !isOtherFormActive && (
+                <div
+                  className={cn(
+                    "absolute bottom-3 right-3 flex flex-col gap-2",
+                    hiddenButtonClasses
+                  )}
+                >
+                  <IconButton
+                    Icon={Trash2}
+                    color={ButtonColor.RED}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={handleDelete}
+                    title="Delete"
+                  />
+                  <IconButton
+                    Icon={Pencil}
+                    color={ButtonColor.CYAN}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={handleEdit}
+                    title="Edit"
+                  />
+                </div>
+              )
+            )}
+          </>
         )}
       </div>
-      {!isEditing && (
-        <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <IconButton
-            Icon={Pencil}
-            color={ButtonColor.CYAN}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={handleEdit}
-            title="Edit"
-          />
-          <IconButton
-            Icon={Trash2}
-            color={ButtonColor.RED}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={handleDelete}
-            title="Delete"
-          />
-        </div>
-      )}
     </div>
   )
 }

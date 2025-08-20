@@ -2,10 +2,10 @@ import { cn, ButtonColor } from "@/styles"
 import { ButtonHTMLAttributes, DetailedHTMLProps } from "react"
 
 const buttonBaseClass =
-  "h-8 w-8 flex items-center justify-center rounded cursor-pointer disabled:bg-gray-700 disabled:cursor-not-allowed"
-const cyanButtonClass = "bg-cyan-600 hover:bg-cyan-500"
-const redButtonClass = "bg-red-600 hover:bg-red-500"
-const grayButtonClass = "bg-gray-700 hover:bg-gray-600"
+  "h-8 w-8 flex items-center justify-center rounded cursor-pointer disabled:bg-muted disabled:cursor-not-allowed"
+const cyanButtonClass = "bg-accent hover:bg-accent-highlight"
+const redButtonClass = "bg-danger hover:bg-danger-highlight"
+const grayButtonClass = "bg-muted hover:bg-muted-highlight"
 
 type BaseProps = Omit<
   DetailedHTMLProps<ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>,

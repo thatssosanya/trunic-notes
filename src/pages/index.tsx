@@ -71,18 +71,18 @@ function AuthPage() {
   }, [handleSignin])
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-8 bg-gray-900 text-white">
+    <main className="min-h-screen flex flex-col items-center justify-center p-8 bg-primary text-primary">
       <Head>
         <title>Sign in — Trunic Notes</title>
       </Head>
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-cyan-300">Trunic Notes</h1>
+        <h1 className="text-4xl font-bold text-accent">Trunic Notes</h1>
       </div>
 
-      <div className="w-full max-w-sm bg-gray-800 shadow-md rounded-lg p-8 pt-6 space-y-4">
+      <div className="w-full max-w-sm bg-card rounded-lg p-8 pt-6 space-y-4">
         <div>
           <label
-            className="block text-gray-300 text-sm font-bold mb-2"
+            className="block text-secondary text-sm font-bold mb-2"
             htmlFor="username"
           >
             Username
@@ -90,7 +90,7 @@ function AuthPage() {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="bg-gray-900 border border-gray-700 rounded w-full py-2 px-3 text-white leading-tight focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            className="bg-input border border-primary rounded w-full py-2 px-3 leading-tight"
             id="username"
             type="text"
             placeholder="Username"
@@ -99,7 +99,7 @@ function AuthPage() {
         </div>
         <div>
           <label
-            className="block text-gray-300 text-sm font-bold mb-2"
+            className="block text-secondary text-sm font-bold mb-2"
             htmlFor="password"
           >
             Password
@@ -107,7 +107,7 @@ function AuthPage() {
           <input
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="bg-gray-900 border border-gray-700 rounded w-full py-2 px-3 text-white leading-tight focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            className="bg-input border border-primary rounded w-full py-2 px-3 leading-tight"
             id="password"
             type="password"
             placeholder="Password"
@@ -115,12 +115,12 @@ function AuthPage() {
             required
           />
         </div>
-        {error && <p className="text-red-500 text-xs italic">{error}</p>}
+        {error && <p className="text-danger text-xs italic">{error}</p>}
         <div className="flex items-center justify-between gap-4">
           <button
             disabled={isLoading}
             onClick={handleSignin}
-            className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:bg-gray-600 w-full flex items-center justify-center cursor-pointer"
+            className="bg-accent hover:bg-accent- font-bold py-2 px-4 rounded focus:outline-none disabled:bg-muted w-full flex items-center justify-center cursor-pointer"
             type="submit"
           >
             {isLoading ? (
@@ -132,7 +132,7 @@ function AuthPage() {
           <button
             disabled={isLoading}
             onClick={handleSignup}
-            className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:bg-gray-600 w-full flex items-center justify-center cursor-pointer"
+            className="bg-accent hover:bg-accent-highlight font-bold py-2 px-4 rounded focus:outline-none disabled:bg-muted w-full flex items-center justify-center cursor-pointer"
             type="submit"
           >
             {isLoading ? (

@@ -1,4 +1,5 @@
 import { useConfig } from "@/context/ConfigContext"
+import { cn } from "@/styles"
 import { RuneLines } from "@/types"
 import React from "react"
 
@@ -95,139 +96,153 @@ export default function RuneEditor({
   const { showInactiveLines } = useConfig()
 
   const handleToggle = (index: number) => {
+    if (!isEditing) return
     const newState = [...runeState] as RuneLines
     newState[index] = !newState[index]
-    if (isEditing) {
-      setRuneState(newState)
-    }
+    setRuneState(newState)
   }
 
-  const activeClass = "stroke-cyan-300"
-  const inactiveClass = "stroke-gray-700"
+  const activeClass = "stroke-accent"
+  const inactiveClass = "stroke-muted"
 
-  const SvgPath = ({ path, isActive }: { path: string; isActive: boolean }) => (
-    <path
-      d={path}
-      strokeWidth="5"
-      strokeLinecap="round"
-      className={isActive ? activeClass : inactiveClass}
-    />
-  )
-
-  const SvgCircle = ({
-    cx,
-    cy,
-    r,
-    isActive,
-  }: {
-    cx: number
-    cy: number
-    r: number
-    isActive: boolean
-  }) => (
-    <circle
-      cx={cx}
-      cy={cy}
-      r={r}
-      strokeWidth="5"
-      fill="none"
-      className={isActive ? activeClass : inactiveClass}
-    />
-  )
-
-  const activeElements = RUNE_LINES.filter((el) => runeState[el.index])
-  const inactiveElements = RUNE_LINES.filter((el) => !runeState[el.index])
-
-  const isLeftConnectorActive = runeState[LEFT_CONNECTOR_SEGMENTS.index]
-  const isCircleActive = runeState[REVERSE_CIRCLE.index]
   const isDependentConnectorActive = DEPENDENT_CONNECTOR.controllerIndices.some(
     (i) => runeState[i]
   )
 
+  // TODO add custom pointerenter/pointerleave handlers
   return (
     <div className="w-auto h-auto">
       <svg
         viewBox={getDynamicViewBox(chainPosition)}
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* --- INACTIVE ELEMENTS (BOTTOM LAYER) --- */}
-        {(isEditing || showInactiveLines) && (
-          <g className="inactive-elements">
-            {inactiveElements.map(({ index, path }) => (
-              <SvgPath key={index} path={path} isActive={false} />
-            ))}
-            {!isLeftConnectorActive &&
-              LEFT_CONNECTOR_SEGMENTS.paths.map((p, i) => (
-                <SvgPath key={`l-conn-i-${i}`} path={p} isActive={false} />
-              ))}
-            {!isCircleActive && (
-              <SvgCircle {...REVERSE_CIRCLE} isActive={false} />
+        {/* --- DEPENDENT CONNECTOR --- */}
+        {(isDependentConnectorActive || isEditing || showInactiveLines) && (
+          <path
+            d={DEPENDENT_CONNECTOR.path}
+            strokeWidth="5"
+            strokeLinecap="round"
+            className={cn(
+              isDependentConnectorActive ? activeClass : inactiveClass
             )}
-            {!isDependentConnectorActive && (
-              <SvgPath path={DEPENDENT_CONNECTOR.path} isActive={false} />
-            )}
-          </g>
+          />
         )}
 
-        {/* --- ACTIVE ELEMENTS (TOP LAYER) --- */}
-        <g className="active-elements">
-          {activeElements.map(({ index, path }) => (
-            <SvgPath key={index} path={path} isActive={true} />
-          ))}
-          {isLeftConnectorActive &&
-            LEFT_CONNECTOR_SEGMENTS.paths.map((p, i) => (
-              <SvgPath key={`l-conn-a-${i}`} path={p} isActive={true} />
-            ))}
-          {isCircleActive && <SvgCircle {...REVERSE_CIRCLE} isActive={true} />}
-          {isDependentConnectorActive && (
-            <SvgPath path={DEPENDENT_CONNECTOR.path} isActive={true} />
-          )}
-        </g>
+        {/* --- RUNE SEGMENTS --- */}
+        {RUNE_LINES.toSorted((a) => (runeState[a.index] ? 1 : -1)).map(
+          ({ index, path }) => {
+            const isActive = runeState[index]
+            if (!isActive && !isEditing && !showInactiveLines) return null
 
-        {/* --- ALWAYS-ON MIDDLE LINE --- */}
+            return (
+              <g
+                key={index}
+                className={cn(isEditing && "group/line cursor-pointer")}
+                onClick={() => handleToggle(index)}
+              >
+                <path
+                  d={path}
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                  className={cn(
+                    isActive ? activeClass : inactiveClass,
+                    isEditing &&
+                      (isActive
+                        ? "group-hover/line:stroke-accent-highlight group-hover/line:z-10"
+                        : "group-hover/line:stroke-muted-highlight")
+                  )}
+                />
+                {isEditing && (
+                  <path
+                    d={path}
+                    stroke="transparent"
+                    strokeWidth="20"
+                    strokeLinecap="round"
+                  />
+                )}
+              </g>
+            )
+          }
+        )}
+
+        {/* --- LEFT CONNECTOR --- */}
+        {(() => {
+          const isActive = runeState[LEFT_CONNECTOR_SEGMENTS.index]
+          if (!isActive && !isEditing && !showInactiveLines) return null
+
+          return (
+            <g
+              className={cn(isEditing && "group/line cursor-pointer")}
+              onClick={() => handleToggle(LEFT_CONNECTOR_SEGMENTS.index)}
+            >
+              {LEFT_CONNECTOR_SEGMENTS.paths.map((p, i) => (
+                <path
+                  key={`l-conn-vis-${i}`}
+                  d={p}
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                  className={cn(
+                    isActive ? activeClass : inactiveClass,
+                    isEditing &&
+                      (isActive
+                        ? "group-hover/line:stroke-accent-highlight"
+                        : "group-hover/line:stroke-muted-highlight")
+                  )}
+                />
+              ))}
+              {isEditing &&
+                LEFT_CONNECTOR_SEGMENTS.paths.map((p, i) => (
+                  <path
+                    key={`l-conn-click-${i}`}
+                    d={p}
+                    stroke="transparent"
+                    strokeWidth="20"
+                    strokeLinecap="round"
+                  />
+                ))}
+            </g>
+          )
+        })()}
+
+        {/* --- REVERSE CIRCLE --- */}
+        {(() => {
+          const isActive = runeState[REVERSE_CIRCLE.index]
+          if (!isActive && !isEditing && !showInactiveLines) return null
+          const { cx, cy, r } = REVERSE_CIRCLE
+
+          return (
+            <g
+              className={cn(isEditing && "group/line cursor-pointer")}
+              onClick={() => handleToggle(REVERSE_CIRCLE.index)}
+            >
+              <circle
+                cx={cx}
+                cy={cy}
+                r={r}
+                strokeWidth="5"
+                fill="none"
+                className={cn(
+                  isActive ? activeClass : inactiveClass,
+                  isEditing &&
+                    (isActive
+                      ? "group-hover/line:stroke-accent-highlight"
+                      : "group-hover/line:stroke-muted-highlight")
+                )}
+              />
+              {isEditing && (
+                <circle cx={cx} cy={cy} strokeWidth="20" fill="transparent" />
+              )}
+            </g>
+          )
+        })()}
+
+        {/* --- ALWAYS ON MIDDLE LINE --- */}
         <path
           d="M -50 0 L 50 0"
           strokeWidth="5"
           strokeLinecap="round"
           className={activeClass}
         />
-
-        {/* --- CLICK HANDLERS --- */}
-        {isEditing && (
-          <g className="click-handlers">
-            {RUNE_LINES.map(({ index, path }) => (
-              <path
-                key={`click-${index}`}
-                d={path}
-                stroke="transparent"
-                strokeWidth="20"
-                className="cursor-pointer"
-                onClick={() => handleToggle(index)}
-              />
-            ))}
-            <g
-              className="cursor-pointer"
-              onClick={() => handleToggle(LEFT_CONNECTOR_SEGMENTS.index)}
-            >
-              {LEFT_CONNECTOR_SEGMENTS.paths.map((p, i) => (
-                <path
-                  key={`click-l-conn-${i}`}
-                  d={p}
-                  stroke="transparent"
-                  strokeWidth="20"
-                />
-              ))}
-            </g>
-            <circle
-              cx={REVERSE_CIRCLE.cx}
-              cy={REVERSE_CIRCLE.cy}
-              r={REVERSE_CIRCLE.r + 5}
-              fill="transparent"
-              className="cursor-pointer"
-              onClick={() => handleToggle(REVERSE_CIRCLE.index)}
-            />
-          </g>
-        )}
       </svg>
     </div>
   )

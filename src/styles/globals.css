@@ -1,15 +1,90 @@
 @import "tailwindcss";
 
-:root {
-  --background: var(--color-gray-900);
+@theme {
+  --color-*: initial;
+
+  /* Background Colors */
+  --background-color-primary: oklch(0.8476 0.0403 260.14);
+  --background-color-card: oklch(0.7442 0.0081 61.41);
+  --background-color-input: oklch(0.8381 0.02 252.9);
+  --background-color-accent: oklch(0.6534 0.0787 246.81);
+  --background-color-accent-highlight: oklch(0.5474 0.0957 240.31);
+  --background-color-danger: oklch(0.5698 0.1148 357.96);
+  --background-color-danger-highlight: oklch(0.5098 0.1068 355.96);
+  --background-color-muted: oklch(0.6505 0.0084 241.73);
+  --background-color-muted-highlight: oklch(0.5775 0.0044 238.83);
+
+  /* Text Colors */
+  --text-color-primary: oklch(0.3241 0.0098 260.71);
+  --text-color-secondary: oklch(0.4437 0.0065 286.13);
+  --text-color-accent: oklch(0.3241 0.0098 260.71);
+  --text-color-accent-highlight: oklch(0.2721 0.0298 258.71);
+  --text-color-accent-secondary: oklch(0.7981 0.1479 102.29);
+  --text-color-danger: oklch(0.4812 0.1462 21.6);
+  --text-color-muted: oklch(0.6505 0.0084 241.73);
+  --text-color-muted-highlight: oklch(0.4945 0.0034 238.73);
+
+  /* Border Colors */
+  --border-color-primary: oklch(0.318 0.0385 78.69);
+  --border-color-accent: oklch(0.7981 0.1479 102.29);
+
+  /* Stroke Colors */
+  --stroke-accent: oklch(0.3241 0.0098 260.71);
+  --stroke-accent-highlight: oklch(0.2721 0.0298 258.71);
+  --stroke-muted: oklch(0.6505 0.0084 241.73);
+  --stroke-muted-highlight: oklch(0.4945 0.0034 238.73);
+
+  /* Misc Colors */
+  --color-accent-secondary: oklch(0.7981 0.1479 102.29);
 }
 
-@theme inline {
-  --color-background: var(--background);
+@layer base {
+  [data-theme="dark"] {
+    --color-*: initial;
+
+    /* Background Colors */
+    --background-color-primary: oklch(0.21 0.034 264.665); /* gray-900 */
+    --background-color-card: oklch(0.278 0.033 256.848); /* gray-800 */
+    --background-color-input: oklch(0.21 0.034 264.665); /* gray-900 */
+    --background-color-accent: oklch(0.609 0.126 221.723); /* cyan-600 */
+    --background-color-accent-highlight: oklch(
+      0.715 0.143 215.221
+    ); /* cyan-500 */
+    --background-color-danger: oklch(0.577 0.245 27.325); /* red-600 */
+    --background-color-danger-highlight: oklch(
+      0.637 0.237 25.331
+    ); /* red-500 */
+    --background-color-muted: oklch(0.373 0.034 259.733); /* gray-700 */
+    --background-color-muted-highlight: oklch(
+      0.446 0.03 256.802
+    ); /* gray-600 */
+
+    /* Text Colors */
+    --text-color-primary: #fff; /* white */
+    --text-color-secondary: oklch(0.872 0.01 258.338); /* gray-300 */
+    --text-color-accent: oklch(0.865 0.127 207.078); /* cyan-300 */
+    --text-color-accent-highlight: oklch(0.917 0.08 205.041); /* cyan-200 */
+    --text-color-accent-secondary: oklch(0.828 0.189 84.429); /* amber-400 */
+    --text-color-danger: oklch(0.704 0.191 22.216); /* red-400 */
+    --text-color-muted: oklch(0.551 0.027 264.364); /* gray-500 */
+    --text-color-muted-highlight: oklch(0.707 0.022 261.325); /* gray-400 */
+
+    /* Border Colors */
+    --border-color-primary: oklch(0.373 0.034 259.733); /* gray-700 */
+    --border-color-accent: oklch(0.715 0.143 215.221); /* cyan-500 */
+
+    /* Stroke Colors */
+    --stroke-accent: oklch(0.865 0.127 207.078); /* cyan-300 */
+    --stroke-accent-highlight: oklch(0.917 0.08 205.041); /* cyan-200 */
+    --stroke-muted: oklch(0.373 0.034 259.733); /* gray-700 */
+    --stroke-muted-highlight: oklch(0.446 0.03 256.802); /* gray-600 */
+
+    /* Misc Colors */
+    --color-accent-secondary: oklch(0.828 0.189 84.429); /* amber-400 */
+  }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--background-color-primary);
   font-family: Arial, Helvetica, sans-serif;
 }

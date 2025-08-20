@@ -5,6 +5,7 @@ import React, {
   Dispatch,
   SetStateAction,
   useCallback,
+  useEffect,
 } from "react"
 import usePersistedState from "@/hooks/usePersistedState"
 import {
@@ -15,19 +16,19 @@ import {
 } from "@/utils/consts"
 import { useIsMobile } from "@/hooks/useMediaQuery"
 import useCallbackUntilSignal from "@/hooks/useCallbackUntilSignal"
-import { SortingOptions } from "@/utils/enums"
+import { SortingOption, ThemeOption } from "@/utils/enums"
 
 interface ConfigContextType {
   isMenuOpen: boolean
   setIsMenuOpen: Dispatch<SetStateAction<boolean>>
   showInactiveLines: boolean
   setShowInactiveLines: Dispatch<SetStateAction<boolean>>
-  isVerticalCards: boolean
-  setIsVerticalCards: Dispatch<SetStateAction<boolean>>
   gridCols: GRID_COLS_OPTION
   setGridCols: Dispatch<SetStateAction<GRID_COLS_OPTION>>
-  sortBy: SortingOptions
-  setSortBy: Dispatch<SetStateAction<SortingOptions>>
+  sortBy: SortingOption
+  setSortBy: Dispatch<SetStateAction<SortingOption>>
+  theme: ThemeOption
+  setTheme: Dispatch<SetStateAction<ThemeOption>>
 }
 
 const ConfigContext = createContext<ConfigContextType | undefined>(undefined)
@@ -41,10 +42,6 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     "trunic-show-inactive-lines",
     false
   )
-  const [isVerticalCards, setIsVerticalCards] = usePersistedState(
-    "trunic-card-style",
-    true
-  )
   const [gridCols, setGridCols] = usePersistedState<GRID_COLS_OPTION>(
     "trunic-grid-cols",
     GRID_COLS_DESKTOP_DEFAULT
@@ -57,12 +54,26 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     "trunic-search-rune",
     EMPTY_RUNE_LINES
   )
-  const [sortBy, setSortBy] = usePersistedState<SortingOptions>(
+  const [sortBy, setSortBy] = usePersistedState<SortingOption>(
     "trunic-sort-by",
-    SortingOptions.SEQUENCE
+    SortingOption.SEQUENCE
+  )
+  const [theme, setTheme] = usePersistedState<ThemeOption>(
+    "trunic-theme",
+    ThemeOption.DEVICE
   )
 
+  useEffect(() => {
+    document.documentElement.dataset.theme =
+      theme === ThemeOption.DARK ||
+      (theme === ThemeOption.DEVICE &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches)
+        ? "dark"
+        : "light"
+  }, [theme])
+
   const isMobile = useIsMobile()
+  // if on mobile and grid cols is desktop default, reset to mobile default
   const correctGridColsForMobile = useCallback(() => {
     if (isMobile === undefined) {
       return
@@ -78,8 +89,6 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     setIsMenuOpen,
     showInactiveLines,
     setShowInactiveLines,
-    isVerticalCards,
-    setIsVerticalCards,
     gridCols,
     setGridCols,
     searchQuery,
@@ -88,6 +97,8 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     setSearchRuneState,
     sortBy,
     setSortBy,
+    theme,
+    setTheme,
   }
 
   return (

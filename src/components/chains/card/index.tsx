@@ -2,11 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from "react"
 import { Chain, RuneLines } from "@/types"
 import RuneEditor from "@/components/runes/RuneEditor"
 import { Check, FilePlus, Pencil, Trash2, X } from "lucide-react"
-import {
-  EMPTY_CHAIN_DATA,
-  EMPTY_RUNE_LINES,
-  GRID_COLS_OPTION,
-} from "@/utils/consts"
+import { EMPTY_CHAIN_DATA, EMPTY_RUNE_LINES } from "@/utils/consts"
 import { useConfig } from "@/context/ConfigContext"
 import useTapOrHover from "@/hooks/useTapOrHover"
 import { useDeleteChain, useSaveChain } from "@/hooks/data/chains"
@@ -26,8 +22,19 @@ interface ChainCardProps {
   onScrollToRune?: (id: string) => void
 }
 
-const SMALL_GRID_COLS = ["1", "2", "3"] as GRID_COLS_OPTION[]
-const FALLBACK_GRID_COLS = "4" as GRID_COLS_OPTION
+// min 4, otherwise half of main grid cols
+const GRID_COLS_MAP = {
+  "1": "4",
+  "2": "4",
+  "3": "4",
+  "4": "4",
+  "6": "4",
+  "8": "4",
+  "10": "6",
+  "12": "6",
+  "16": "8",
+  "20": "10",
+} as const
 
 function ChainCard({
   chain,
@@ -45,7 +52,7 @@ function ChainCard({
     buttonClasses: hiddenButtonClasses,
   } = useTapOrHover({ isDisabled: isEditing })
 
-  const { gridCols, isVerticalCards } = useConfig()
+  const { gridCols } = useConfig()
 
   const { data: runes = [] } = useRunes()
   const saveChainMutation = useSaveChain()
@@ -65,11 +72,6 @@ function ChainCard({
         return runeRecord ?? { id: "", lines: rune, translation: "" }
       }),
     [formData.runes, runes]
-  )
-
-  const effectiveGridCols = useMemo(
-    () => (SMALL_GRID_COLS.includes(gridCols) ? FALLBACK_GRID_COLS : gridCols),
-    [gridCols]
   )
 
   useEffect(() => {
@@ -157,8 +159,8 @@ function ChainCard({
       ref={elementRef}
       {...handlers}
       className={cn(
-        "relative group bg-gray-800 p-4 rounded-lg border-2",
-        isEditing ? "border-cyan-500" : "border-gray-700"
+        "relative group bg-card p-4 rounded-lg border-2",
+        isEditing ? "border-accent" : "border-primary"
       )}
     >
       {isEditing ? (
@@ -168,13 +170,13 @@ function ChainCard({
           value={formData.translation}
           onChange={handleFieldChange}
           placeholder="Translation"
-          className="text-xl font-bold bg-gray-900 rounded p-2 w-full mb-4 h-10"
+          className="text-xl font-bold bg-input rounded p-2 w-full mb-4 h-10"
           autoFocus
         />
       ) : (
-        <h3 className="text-xl font-bold text-white mb-4 pl-2 h-10 leading-10 break-all truncate">
+        <h3 className="text-xl font-bold mb-4 pl-2 h-10 leading-10 break-all truncate">
           {chain?.translation || (
-            <span className="text-gray-500">No translation</span>
+            <span className="text-muted">No translation</span>
           )}
         </h3>
       )}
@@ -182,7 +184,7 @@ function ChainCard({
       <div
         className={cn(
           "grid p-4 pt-6 rounded-md ",
-          GRID_COLS_CLASSES[effectiveGridCols] || "grid-cols-8"
+          GRID_COLS_CLASSES[GRID_COLS_MAP[gridCols]] || "grid-cols-4"
         )}
       >
         {runesWithTranslations.map((rune, index, arr) => (
@@ -236,7 +238,7 @@ function ChainCard({
                 title="Delete from Chain"
               />
             )}
-            <h2 className="col-span-2 text-lg font-bold text-white text-center h-8 flex items-center justify-center break-all truncate">
+            <h2 className="col-span-2 text-lg font-bold text-center h-8 flex items-center justify-center break-all truncate">
               {rune.translation}
             </h2>
           </div>
@@ -249,7 +251,7 @@ function ChainCard({
                 runes: [...prev.runes, EMPTY_RUNE_LINES],
               }))
             }
-            className="flex items-center justify-center min-h-8 m-2 mb-10 border-4 border-dashed border-gray-700 hover:border-cyan-500 rounded-lg transition-colors text-gray-500 hover:text-cyan-400 cursor-pointer"
+            className="flex items-center justify-center min-h-8 m-2 mb-10 border-4 border-dashed border-primary hover:border-accent rounded-lg transition-colors text-muted hover:text-accent cursor-pointer"
           >
             <span className="text-6xl font-thin">+</span>
           </button>
@@ -263,11 +265,11 @@ function ChainCard({
             value={formData.note}
             onChange={handleFieldChange}
             placeholder="Note..."
-            className="text-sm bg-gray-900 rounded p-1 h-full w-full resize-none"
+            className="text-sm bg-input rounded p-1 h-full w-full resize-none"
           />
         ) : (
           chain?.note && (
-            <p className="text-sm text-gray-400 whitespace-pre-wrap h-full p-1 break-all truncate">
+            <p className="text-sm text-secondary whitespace-pre-wrap h-full p-1 break-all truncate">
               {chain.note}
             </p>
           )
@@ -294,22 +296,21 @@ function ChainCard({
       {!isEditing && !isOtherFormActive && chain?.id && (
         <div
           className={cn(
-            "absolute flex gap-2 right-4",
-            hiddenButtonClasses,
-            isVerticalCards ? "flex-col-reverse bottom-4" : "top-4"
+            "absolute flex gap-2 right-4 flex-col bottom-4",
+            hiddenButtonClasses
           )}
         >
-          <IconButton
-            Icon={Pencil}
-            color={ButtonColor.CYAN}
-            onClick={handleEdit}
-            title="Edit"
-          />
           <IconButton
             Icon={Trash2}
             color={ButtonColor.RED}
             onClick={handleDelete}
             title="Delete"
+          />
+          <IconButton
+            Icon={Pencil}
+            color={ButtonColor.CYAN}
+            onClick={handleEdit}
+            title="Edit"
           />
         </div>
       )}

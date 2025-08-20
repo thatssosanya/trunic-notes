@@ -1,14 +1,15 @@
 import { useEffect, useMemo } from "react"
 import ChainCard from "@/components/chains/card"
-import { ChevronDown, ChevronUp } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 import { useChains } from "@/hooks/data/chains"
 import usePersistedState from "@/hooks/usePersistedState"
 import { useAppState } from "@/context/AppStateContext"
-import { EditStates } from "@/utils/enums"
+import { EditState } from "@/utils/enums"
 import { RuneLines } from "@/types"
 import { useSearchState } from "@/context/SearchStateContext"
 import { useRunes } from "@/hooks/data/runes"
 import { isExactLineMatch } from "@/utils/runes"
+import { cn } from "@/styles"
 
 type ChainCollectionProps = {
   onCopyRune: (lines: RuneLines) => void
@@ -40,14 +41,14 @@ export default function ChainCollection({
   useEffect(() => {
     if (
       !showChainsSection &&
-      (editState === EditStates.ADDING_CHAIN ||
-        editState === EditStates.EDITING_CHAIN)
+      (editState === EditState.ADDING_CHAIN ||
+        editState === EditState.EDITING_CHAIN)
     ) {
       cancelEdit()
     }
   }, [showChainsSection, editState, cancelEdit])
 
-  const isEditing = editState === EditStates.EDITING_CHAIN
+  const isEditing = editState === EditState.EDITING_CHAIN
 
   const filteredChains = useMemo(() => {
     const baseFiltered = chains.filter((chain) => {
@@ -83,31 +84,30 @@ export default function ChainCollection({
 
   return (
     <div className="relative">
-      {/* TODO
-      {isRefetching && (
-        <div className="absolute inset-0 bg-gray-900/75 z-10 flex justify-center items-center">
-          <Loader2 className="h-8 w-8 text-cyan-300 animate-spin" />
-        </div>
-      )} */}
       <button
         onClick={() => setShowChainsSection(!showChainsSection)}
-        className="w-full flex justify-center items-center gap-2 mb-4 cursor-pointer"
+        className="w-full flex justify-center items-center gap-2 mb-4 cursor-pointer text-secondary"
       >
-        <h2 className="text-2xl font-bold text-gray-300">Chains</h2>
-        {showChainsSection ? <ChevronUp /> : <ChevronDown />}
+        <h2 className="text-2xl font-bold">Chains</h2>
+        <ChevronDown
+          className={cn(
+            "transition-transform rotate-0",
+            showChainsSection && "rotate-180"
+          )}
+        />
       </button>
 
       {showChainsSection && (
         <div className="mb-4">
           {isError ? (
-            <p className="text-center mb-4 text-red-400">
+            <p className="text-center mb-4 text-danger">
               Couldn&apos;t load chains: An error occurred
             </p>
           ) : isLoading ? (
             <p className="text-center mb-4">Loading chains...</p>
           ) : isAnySearchActive &&
             !filteredChains.length &&
-            editState !== EditStates.ADDING_CHAIN ? (
+            editState !== EditState.ADDING_CHAIN ? (
             <div className="w-full text-center text-lg pt-4">
               Nothing matched your search
             </div>
@@ -122,11 +122,11 @@ export default function ChainCollection({
                     isEditing={isEditingThis}
                     onEdit={editChain}
                     isOtherFormActive={
-                      editState !== EditStates.IDLE && !isEditingThis
+                      editState !== EditState.IDLE && !isEditingThis
                     }
                     onCancel={cancelEdit}
                     onCopyRune={
-                      editState === EditStates.IDLE ? onCopyRune : undefined
+                      editState === EditState.IDLE ? onCopyRune : undefined
                     }
                     consumeRune={
                       isEditingThis ? consumeRuneForChain : undefined
@@ -135,7 +135,7 @@ export default function ChainCollection({
                   />
                 )
               })}
-              {editState === EditStates.ADDING_CHAIN ? (
+              {editState === EditState.ADDING_CHAIN ? (
                 <ChainCard
                   key="newChainForm"
                   isEditing
@@ -143,11 +143,11 @@ export default function ChainCollection({
                   consumeRune={consumeRuneForChain}
                 />
               ) : (
-                editState === EditStates.IDLE &&
+                editState === EditState.IDLE &&
                 !isAnySearchActive && (
                   <button
                     onClick={addChain}
-                    className="flex items-center justify-center w-full h-full min-h-24 border-4 border-dashed border-gray-700 hover:border-cyan-500 rounded-lg transition-colors text-gray-500 hover:text-cyan-400 cursor-pointer"
+                    className="flex items-center justify-center w-full h-full min-h-24 border-4 border-dashed border-primary hover:border-accent rounded-lg transition-colors text-muted hover:text-accent cursor-pointer"
                   >
                     <span className="text-6xl font-thin">+</span>
                   </button>

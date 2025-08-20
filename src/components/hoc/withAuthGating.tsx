@@ -27,11 +27,11 @@ function AuthGate({
   }, [allowed, status, router])
 
   return status === "loading" || !allowed ? (
-    <main className="min-h-screen bg-gray-900 flex items-center justify-center">
+    <main className="min-h-screen bg-primary flex items-center justify-center">
       <Head>
         <title>Trunic Notes</title>
       </Head>
-      <Loader2 className="w-12 h-12 text-cyan-300 animate-spin" />
+      <Loader2 className="w-12 h-12 text-accent animate-spin" />
     </main>
   ) : (
     children

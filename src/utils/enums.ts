@@ -1,17 +1,23 @@
-export enum SortingOptions {
+export enum SortingOption {
   SEQUENCE,
   ALPHA,
 }
 
-export enum RuneNewFormLocations {
+export enum RuneNewFormLocation {
   START,
   END,
 }
 
-export enum EditStates {
+export enum EditState {
   IDLE,
   ADDING_RUNE,
   EDITING_RUNE,
   ADDING_CHAIN,
   EDITING_CHAIN,
+}
+
+export enum ThemeOption {
+  DEVICE,
+  LIGHT,
+  DARK,
 }

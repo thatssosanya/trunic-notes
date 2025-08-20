@@ -5,11 +5,11 @@ import React, {
   ReactNode,
   useCallback,
 } from "react"
-import { EditStates } from "@/utils/enums"
+import { EditState } from "@/utils/enums"
 
 interface AppStateContextType {
   editingId: string | null
-  editState: EditStates
+  editState: EditState
   cancelEdit: () => void
   addRune: () => void
   editRune: (id: string) => void
@@ -23,25 +23,25 @@ const AppStateContext = createContext<AppStateContextType | undefined>(
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editState, setEditState] = useState<EditStates>(EditStates.IDLE)
+  const [editState, setEditState] = useState<EditState>(EditState.IDLE)
   const cancelEdit = useCallback(() => {
-    setEditState(EditStates.IDLE)
+    setEditState(EditState.IDLE)
     setEditingId(null)
   }, [])
   const addRune = useCallback(() => {
-    setEditState(EditStates.ADDING_RUNE)
+    setEditState(EditState.ADDING_RUNE)
     setEditingId(null)
   }, [])
   const editRune = useCallback((id: string) => {
-    setEditState(EditStates.EDITING_RUNE)
+    setEditState(EditState.EDITING_RUNE)
     setEditingId(id)
   }, [])
   const addChain = useCallback(() => {
-    setEditState(EditStates.ADDING_CHAIN)
+    setEditState(EditState.ADDING_CHAIN)
     setEditingId(null)
   }, [])
   const editChain = useCallback((id: string) => {
-    setEditState(EditStates.EDITING_CHAIN)
+    setEditState(EditState.EDITING_CHAIN)
     setEditingId(id)
   }, [])
 
