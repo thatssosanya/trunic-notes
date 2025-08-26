@@ -11,7 +11,7 @@ import { useIsMobile } from "@/hooks/useMediaQuery"
 import { useAppState } from "@/context/AppStateContext"
 import { EditState, SortingOption, ThemeOption } from "@/utils/enums"
 import { useSearchState } from "@/context/SearchStateContext"
-import IconButton from "./common/IconButton"
+import IconButton from "@/components/common/IconButton"
 import { ButtonColor, cn } from "@/styles"
 
 const buttonBaseClass = "px-3 py-1 text-sm rounded cursor-pointer"

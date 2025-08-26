@@ -1,4 +1,4 @@
-import { RUNE_LINE_INDICES } from "./consts"
+import { RUNE_LINE_INDICES } from "@/utils/consts"
 
 export const isExactLineMatch = (
   a: boolean[],

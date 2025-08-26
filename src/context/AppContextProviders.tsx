@@ -1,6 +1,6 @@
-import { ConfigProvider } from "./ConfigContext"
-import { AppStateProvider } from "./AppStateContext"
-import { SearchStateProvider } from "./SearchStateContext"
+import { ConfigProvider } from "@/context/ConfigContext"
+import { AppStateProvider } from "@/context/AppStateContext"
+import { SearchStateProvider } from "@/context/SearchStateContext"
 
 export default function AppContextProviders(props: React.PropsWithChildren) {
   return (
